@@ -1,0 +1,19 @@
+<div class="grid-2">
+  <section class="panel">
+    <h3 class="form-title">Nueva sesión</h3>
+    <select id="sesion_curso"></select>
+    <input id="sesion_titulo" placeholder="Título de la sesión">
+    <input id="sesion_fecha" type="date">
+    <input id="sesion_hora" placeholder="19:00 - 22:00">
+    <input id="sesion_link" placeholder="Link Meet / Zoom">
+    <button class="btn-pri" onclick="SesionesPage.crear()">Guardar sesión</button>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <button class="btn-sec" onclick="SesionesPage.load()">Refrescar</button>
+    </div>
+    <h3 class="list-title">Listado de sesiones</h3>
+    <div id="listaSesiones" class="list"></div>
+  </section>
+</div>

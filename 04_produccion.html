@@ -1,0 +1,23 @@
+<div class="grid-2">
+  <section class="panel">
+    <h3 class="form-title">Nueva producción</h3>
+    <select id="prod_curso"></select>
+    <select id="prod_tipo">
+      <option value="RESUMEN">Resumen</option>
+      <option value="ANALISIS">Análisis</option>
+      <option value="BORRADOR">Borrador</option>
+      <option value="TRABAJO">Trabajo</option>
+    </select>
+    <input id="prod_titulo" placeholder="Título del documento">
+    <input id="prod_link" placeholder="Link del documento">
+    <button class="btn-pri" onclick="ProduccionPage.crear()">Guardar producción</button>
+  </section>
+
+  <section class="panel">
+    <div class="toolbar">
+      <button class="btn-sec" onclick="ProduccionPage.load()">Refrescar</button>
+    </div>
+    <h3 class="list-title">Listado de producción</h3>
+    <div id="listaProduccion" class="list"></div>
+  </section>
+</div>

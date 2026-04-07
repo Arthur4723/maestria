@@ -1,0 +1,639 @@
+<script>
+  const App = {
+    State: {
+      general: {
+        configRows: [],
+        ciclos: [],
+        cicloActual: ''
+      },
+      curricula: [],
+      derived: {
+        cursosActivos: [],
+        cursosPorCiclo: {}
+      },
+      ui: {
+        currentView: 'general',
+        currentCursoTab: null,
+        sidebarCollapsed: false,
+        dirtyGeneral: false
+      }
+    },
+
+    init() {
+      this.showLoader(true);
+      google.script.run.withSuccessHandler((res) => {
+        this.showLoader(false);
+        if (!res.ok) {
+          alert(res.message || 'Error al iniciar');
+          return;
+        }
+
+        this.hydrateState(res.data || {});
+        this.go('general');
+      }).apiBoot();
+    },
+
+    hydrateState(data) {
+      this.State.general.configRows = data.config || [];
+      this.State.general.ciclos = (data.ciclos || []).slice().sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+      this.State.curricula = (data.curricula || []).slice();
+      this.State.general.cicloActual = this.getConfigValue('ciclo_actual') || '';
+      this.rebuildDerived();
+
+      if (!this.State.ui.currentCursoTab && this.State.derived.cursosActivos.length) {
+        this.State.ui.currentCursoTab = this.State.derived.cursosActivos[0].id_curricula;
+      }
+    },
+
+    rebuildDerived() {
+      const byCiclo = {};
+      this.State.curricula.forEach(r => {
+        const key = r.ciclo || '';
+        if (!byCiclo[key]) byCiclo[key] = [];
+        byCiclo[key].push(r);
+      });
+
+      Object.keys(byCiclo).forEach(key => {
+        byCiclo[key].sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+      });
+
+      const cicloActualNombre = this.getCurrentCycleName();
+      const cursosActivos = (byCiclo[cicloActualNombre] || [])
+        .filter(r => String(r.activo || '').toUpperCase() === 'SI')
+        .sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+
+      this.State.derived.cursosPorCiclo = byCiclo;
+      this.State.derived.cursosActivos = cursosActivos;
+
+      if (!cursosActivos.find(x => x.id_curricula === this.State.ui.currentCursoTab)) {
+        this.State.ui.currentCursoTab = cursosActivos.length ? cursosActivos[0].id_curricula : null;
+      }
+    },
+
+    setConfigValue(clave, valor) {
+      const rows = this.State.general.configRows;
+      const found = rows.find(r => r.clave === clave);
+      if (found) {
+        found.valor = valor;
+      } else {
+        rows.push({ clave, valor });
+      }
+
+      if (clave === 'ciclo_actual') {
+        this.State.general.cicloActual = valor;
+      }
+    },
+
+    getConfigValue(clave) {
+      const found = this.State.general.configRows.find(r => r.clave === clave);
+      return found ? found.valor : '';
+    },
+
+    getCurrentCycleName() {
+      const idActual = this.State.general.cicloActual;
+      if (!idActual) return '';
+      const ciclo = this.State.general.ciclos.find(c => c.id_ciclo === idActual);
+      return ciclo ? ciclo.nombre_ciclo : '';
+    },
+
+    go(view) {
+      this.State.ui.currentView = view;
+      document.getElementById('viewTitle').textContent =
+        view === 'general' ? 'Configuración general' : 'Cursos activos';
+
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.querySelector(`[data-view="${view}"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const tpl = document.getElementById('tpl-' + view);
+      document.getElementById('viewContainer').innerHTML = tpl ? tpl.innerHTML : '';
+
+      if (view === 'general') GeneralPage.init();
+      if (view === 'cursos') CursosPage.init();
+    },
+
+    toggleSidebar() {
+      this.State.ui.sidebarCollapsed = !this.State.ui.sidebarCollapsed;
+      document.getElementById('sidebar').classList.toggle('collapsed', this.State.ui.sidebarCollapsed);
+    },
+
+    showLoader(show) {
+      const overlay = document.getElementById('loaderOverlay');
+      if (!overlay) return;
+      overlay.classList.toggle('show', !!show);
+    },
+
+    markDirtyGeneral() {
+      this.State.ui.dirtyGeneral = true;
+      const dirtyEl = document.getElementById('dirtyStatus');
+      if (dirtyEl) {
+        dirtyEl.className = 'dirty-badge';
+        dirtyEl.textContent = 'Cambios sin guardar';
+      }
+    },
+
+    clearDirtyGeneral() {
+      this.State.ui.dirtyGeneral = false;
+      const dirtyEl = document.getElementById('dirtyStatus');
+      if (dirtyEl) {
+        dirtyEl.className = 'clean-badge';
+        dirtyEl.textContent = 'Todo guardado';
+      }
+    }
+  };
+
+  const GeneralPage = {
+    init() {
+      this.renderSummary();
+      this.renderCycleSelector();
+      this.renderCyclesTable();
+      this.renderCurriculaTable();
+      this.renderPreviewTabs();
+      this.renderDirtyStatus();
+    },
+
+    renderDirtyStatus() {
+      const el = document.getElementById('dirtyStatus');
+      if (!el) return;
+      el.className = App.State.ui.dirtyGeneral ? 'dirty-badge' : 'clean-badge';
+      el.textContent = App.State.ui.dirtyGeneral ? 'Cambios sin guardar' : 'Todo guardado';
+    },
+
+    renderSummary() {
+      const anio = App.getConfigValue('anio_actual') || '';
+      const cicloActual = App.getCurrentCycleName() || '-';
+      const totalCiclos = App.State.general.ciclos.length;
+      const totalCursos = App.State.curricula.length;
+      const activos = App.State.derived.cursosActivos.length;
+
+      document.getElementById('summaryStrip').innerHTML = `
+        <div class="summary-box">
+          <div class="summary-label">Año académico</div>
+          <div class="summary-value">${anio || '-'}</div>
+          <div class="summary-mini">Parámetro global</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-label">Ciclo actual</div>
+          <div class="summary-value">${cicloActual}</div>
+          <div class="summary-mini">Vista operativa</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-label">Ciclos registrados</div>
+          <div class="summary-value">${totalCiclos}</div>
+          <div class="summary-mini">Orden manual</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-label">Cursos activos</div>
+          <div class="summary-value">${activos}</div>
+          <div class="summary-mini">${totalCursos} cursos en currícula</div>
+        </div>
+      `;
+
+      document.getElementById('cfg_anio_actual').value = anio || '';
+    },
+
+    renderCycleSelector() {
+      const select = document.getElementById('cfg_ciclo_actual');
+      const current = App.State.general.cicloActual || '';
+
+      select.innerHTML = '<option value="">Seleccione ciclo actual</option>' +
+        App.State.general.ciclos
+          .sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0))
+          .map(c => `<option value="${c.id_ciclo}" ${c.id_ciclo === current ? 'selected' : ''}>${c.nombre_ciclo}</option>`)
+          .join('');
+    },
+
+    renderCyclesTable() {
+      const rows = App.State.general.ciclos.slice().sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+      const box = document.getElementById('cyclesTableBox');
+
+      if (!rows.length) {
+        box.innerHTML = `<div class="empty-state">No hay ciclos registrados aún.</div>`;
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Orden</th>
+                <th>Año</th>
+                <th>Nombre ciclo</th>
+                <th>Activo</th>
+                <th>Actual</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((r) => `
+                <tr>
+                  <td>${r.orden || ''}</td>
+                  <td>${r.anio || ''}</td>
+                  <td>${r.nombre_ciclo || ''}</td>
+                  <td>${r.activo || 'SI'}</td>
+                  <td>${r.id_ciclo === App.State.general.cicloActual ? 'SI' : 'Usar'}</td>
+                  <td>
+                    <button class="mini-btn use" onclick="GeneralPage.useCurrentCycle('${r.id_ciclo}')">${r.id_ciclo === App.State.general.cicloActual ? 'Actual' : 'Usar'}</button>
+                    <button class="mini-btn up" onclick="GeneralPage.moveCycle('${r.id_ciclo}', -1)">⬆️</button>
+                    <button class="mini-btn down" onclick="GeneralPage.moveCycle('${r.id_ciclo}', 1)">⬇️</button>
+                    <button class="mini-btn delete" onclick="GeneralPage.deleteCycle('${r.id_ciclo}')">🗑️</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    },
+
+    renderCurriculaTable() {
+      const cicloActual = App.getCurrentCycleName();
+      const rows = App.State.curricula
+        .filter(r => !cicloActual || r.ciclo === cicloActual)
+        .sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+
+      const box = document.getElementById('curriculaTableBox');
+
+      if (!rows.length) {
+        box.innerHTML = `<div class="empty-state">No hay cursos cargados para el ciclo actual.</div>`;
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Activo</th>
+                <th>Orden</th>
+                <th>Ciclo</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Créditos</th>
+                <th>Días</th>
+                <th>Horario</th>
+                <th>Link</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td>
+                    <select onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','activo',this.value)">
+                      <option value="SI" ${String(r.activo).toUpperCase() === 'SI' ? 'selected' : ''}>SI</option>
+                      <option value="NO" ${String(r.activo).toUpperCase() === 'NO' ? 'selected' : ''}>NO</option>
+                    </select>
+                  </td>
+                  <td><input value="${r.orden || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','orden',this.value)"></td>
+                  <td><input value="${r.ciclo || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','ciclo',this.value)"></td>
+                  <td><input value="${r.codigo || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','codigo',this.value)"></td>
+                  <td><input value="${r.nombre || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','nombre',this.value)"></td>
+                  <td><input value="${r.creditos || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','creditos',this.value)"></td>
+                  <td><input value="${r.dias || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','dias',this.value)"></td>
+                  <td><input value="${r.horario || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','horario',this.value)"></td>
+                  <td><input value="${r.link || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','link',this.value)"></td>
+                  <td><textarea rows="2" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','observaciones',this.value)">${r.observaciones || ''}</textarea></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="scroll-note">La tabla puede desplazarse horizontalmente sin mover la barra flotante de guardado.</div>
+      `;
+    },
+
+    renderPreviewTabs() {
+      App.rebuildDerived();
+      const box = document.getElementById('previewTabsBox');
+      const currentName = App.getCurrentCycleName();
+      const rows = App.State.derived.cursosActivos || [];
+
+      document.getElementById('previewCycleLabel').textContent = currentName || '-';
+      document.getElementById('previewCountLabel').textContent = rows.length;
+
+      if (!rows.length) {
+        box.innerHTML = `<div class="empty-state">No hay cursos activos para mostrar en tabs.</div>`;
+        return;
+      }
+
+      box.innerHTML = `<div class="chips">${rows.map(r => `<div class="chip">${r.nombre}</div>`).join('')}</div>`;
+    },
+
+    addManualCycle() {
+      const anio = (document.getElementById('cycle_anio').value || '').trim();
+      const nombre = (document.getElementById('cycle_nombre').value || '').trim();
+
+      if (!anio || !nombre) {
+        alert('Completa año y nombre del ciclo.');
+        return;
+      }
+
+      const nextOrder = App.State.general.ciclos.length + 1;
+      App.State.general.ciclos.push({
+        id_ciclo: 'CIC_' + Date.now(),
+        anio,
+        nombre_ciclo: nombre,
+        orden: nextOrder,
+        activo: 'SI',
+        creado: new Date().toISOString()
+      });
+
+      if (!App.State.general.cicloActual) {
+        App.State.general.cicloActual = App.State.general.ciclos[0].id_ciclo;
+        App.setConfigValue('ciclo_actual', App.State.general.cicloActual);
+      }
+
+      App.markDirtyGeneral();
+      this.renderCycleSelector();
+      this.renderCyclesTable();
+      this.renderSummary();
+      this.renderPreviewTabs();
+      document.getElementById('cycle_anio').value = '';
+      document.getElementById('cycle_nombre').value = '';
+    },
+
+    useCurrentCycle(id) {
+      App.State.general.cicloActual = id;
+      App.setConfigValue('ciclo_actual', id);
+      App.markDirtyGeneral();
+      App.rebuildDerived();
+      this.renderSummary();
+      this.renderCycleSelector();
+      this.renderCyclesTable();
+      this.renderCurriculaTable();
+      this.renderPreviewTabs();
+    },
+
+    moveCycle(id, dir) {
+      const rows = App.State.general.ciclos.slice().sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+      const idx = rows.findIndex(r => r.id_ciclo === id);
+      const target = idx + dir;
+      if (idx < 0 || target < 0 || target >= rows.length) return;
+
+      const tmp = rows[idx].orden;
+      rows[idx].orden = rows[target].orden;
+      rows[target].orden = tmp;
+
+      App.State.general.ciclos = rows.sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+      App.markDirtyGeneral();
+      this.renderCycleSelector();
+      this.renderCyclesTable();
+      this.renderPreviewTabs();
+    },
+
+    deleteCycle(id) {
+      if (!confirm('¿Eliminar este ciclo?')) return;
+
+      const ciclo = App.State.general.ciclos.find(c => c.id_ciclo === id);
+      const nombre = ciclo ? ciclo.nombre_ciclo : '';
+
+      App.State.general.ciclos = App.State.general.ciclos.filter(c => c.id_ciclo !== id);
+      App.State.curricula = App.State.curricula.filter(c => c.ciclo !== nombre);
+
+      if (App.State.general.cicloActual === id) {
+        App.State.general.cicloActual = App.State.general.ciclos.length ? App.State.general.ciclos[0].id_ciclo : '';
+        App.setConfigValue('ciclo_actual', App.State.general.cicloActual);
+      }
+
+      App.markDirtyGeneral();
+      App.rebuildDerived();
+      this.renderSummary();
+      this.renderCycleSelector();
+      this.renderCyclesTable();
+      this.renderCurriculaTable();
+      this.renderPreviewTabs();
+    },
+
+    updateYear() {
+      const v = document.getElementById('cfg_anio_actual').value || '';
+      App.setConfigValue('anio_actual', v);
+      App.markDirtyGeneral();
+      this.renderSummary();
+    },
+
+    updateCurrentSelector() {
+      const id = document.getElementById('cfg_ciclo_actual').value || '';
+      App.State.general.cicloActual = id;
+      App.setConfigValue('ciclo_actual', id);
+      App.markDirtyGeneral();
+      App.rebuildDerived();
+      this.renderSummary();
+      this.renderCyclesTable();
+      this.renderCurriculaTable();
+      this.renderPreviewTabs();
+    },
+
+    updateCurriculaField(id, field, value) {
+      const row = App.State.curricula.find(r => r.id_curricula === id);
+      if (!row) return;
+      row[field] = value;
+      App.markDirtyGeneral();
+      App.rebuildDerived();
+      this.renderPreviewTabs();
+    },
+
+    romanToNumber(label) {
+      const map = {
+        'I': 1,
+        'II': 2,
+        'III': 3,
+        'IV': 4,
+        'V': 5,
+        'VI': 6,
+        'VII': 7,
+        'VIII': 8,
+        'IX': 9,
+        'X': 10
+      };
+
+      const raw = String(label || '').toUpperCase().trim();
+      const match = raw.match(/CICLO\s+([IVX]+)/);
+      if (!match) return null;
+      return map[match[1]] || null;
+    },
+
+    resolveCycleLabel(label) {
+      const normalized = String(label || '').trim().toUpperCase();
+      const ordered = App.State.general.ciclos.slice().sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
+
+      const exactByName = ordered.find(c => String(c.nombre_ciclo || '').trim().toUpperCase() === normalized);
+      if (exactByName) return exactByName.nombre_ciclo;
+
+      const exactById = ordered.find(c => String(c.id_ciclo || '').trim().toUpperCase() === normalized);
+      if (exactById) return exactById.nombre_ciclo;
+
+      const romanIndex = this.romanToNumber(normalized);
+      if (romanIndex && ordered[romanIndex - 1]) {
+        return ordered[romanIndex - 1].nombre_ciclo;
+      }
+
+      return String(label || '').trim();
+    },
+
+    parseCurriculaBlock(text) {
+      const lines = String(text || '')
+        .split(/\r?\n/)
+        .map(x => x.trim())
+        .filter(Boolean);
+
+      const rows = [];
+      const baseOrder = App.State.curricula.length;
+
+      lines.forEach((line, i) => {
+        let parts = line.split('\t').map(x => x.trim());
+
+        if (parts.length < 4) {
+          parts = line.split(/\s{2,}/).map(x => x.trim());
+        }
+
+        if (parts.length < 4) return;
+
+        const cicloRaw = parts[0] || '';
+        const codigo = parts[1] || '';
+        const nombre = parts[2] || '';
+        const creditos = parts[3] || '';
+
+        rows.push({
+          id_curricula: 'CURR_' + Date.now() + '_' + i,
+          ciclo: this.resolveCycleLabel(cicloRaw),
+          codigo,
+          nombre,
+          creditos,
+          activo: 'SI',
+          orden: baseOrder + i + 1,
+          dias: '',
+          horario: '',
+          link: '',
+          observaciones: '',
+          creado: new Date().toISOString()
+        });
+      });
+
+      return rows;
+    },
+
+    processBlockPaste() {
+      const text = document.getElementById('paste_curricula').value || '';
+      if (!text.trim()) {
+        alert('Pega primero el bloque de currícula.');
+        return;
+      }
+
+      const rows = this.parseCurriculaBlock(text);
+      if (!rows.length) {
+        alert('No se detectaron filas válidas. Verifica que el bloque tenga 4 columnas: ciclo, código, nombre y créditos.');
+        return;
+      }
+
+      App.State.curricula = App.State.curricula.concat(rows);
+      App.markDirtyGeneral();
+      App.rebuildDerived();
+      this.renderSummary();
+      this.renderCurriculaTable();
+      this.renderPreviewTabs();
+      document.getElementById('paste_curricula').value = '';
+    },
+
+    saveAll() {
+      const payload = {
+        config: App.State.general.configRows,
+        ciclos: App.State.general.ciclos
+          .slice()
+          .sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0)),
+        curricula: App.State.curricula
+      };
+
+      App.showLoader(true);
+      google.script.run.withSuccessHandler((res) => {
+        App.showLoader(false);
+        if (!res.ok) {
+          alert(res.message || 'Error al guardar.');
+          return;
+        }
+        App.clearDirtyGeneral();
+        this.renderDirtyStatus();
+      }).apiGuardarGeneral(payload);
+    }
+  };
+
+  const CursosPage = {
+    init() {
+      this.renderTabs();
+      this.renderDetail();
+    },
+
+    renderTabs() {
+      App.rebuildDerived();
+      const rows = App.State.derived.cursosActivos || [];
+      const box = document.getElementById('courseTabsBox');
+
+      if (!rows.length) {
+        box.innerHTML = `<div class="empty-state">No hay cursos activos. Configúralos primero desde Configuración General.</div>`;
+        return;
+      }
+
+      box.innerHTML = rows.map(r => `
+        <button class="course-tab ${r.id_curricula === App.State.ui.currentCursoTab ? 'active' : ''}"
+          onclick="CursosPage.selectTab('${r.id_curricula}')">
+          ${r.nombre}
+        </button>
+      `).join('');
+    },
+
+    selectTab(id) {
+      App.State.ui.currentCursoTab = id;
+      this.renderTabs();
+      this.renderDetail();
+    },
+
+    renderDetail() {
+      const panel = document.getElementById('courseDetailPanel');
+      const rows = App.State.derived.cursosActivos || [];
+      const row = rows.find(r => r.id_curricula === App.State.ui.currentCursoTab);
+
+      if (!row) {
+        panel.innerHTML = `<div class="empty-state">No hay un curso activo seleccionado.</div>`;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="grid-2 equal">
+          <div class="card">
+            <div class="card-title">${row.nombre}</div>
+            <div class="card-subtitle">${row.codigo} <span class="inline-tag">${row.creditos} créditos</span></div>
+
+            <div class="form-row">
+              <div>
+                <label class="muted">Ciclo</label>
+                <input value="${row.ciclo || ''}" disabled>
+              </div>
+              <div>
+                <label class="muted">Estado</label>
+                <input value="${row.activo || ''}" disabled>
+              </div>
+            </div>
+
+            <label class="muted">Días</label>
+            <input value="${row.dias || ''}" disabled>
+
+            <label class="muted">Horario</label>
+            <input value="${row.horario || ''}" disabled>
+
+            <label class="muted">Link</label>
+            <input value="${row.link || ''}" disabled>
+          </div>
+
+          <div class="card soft">
+            <div class="card-title">Observaciones</div>
+            <div class="muted" style="margin-bottom:8px;">Vista operativa del curso activo</div>
+            <div>${row.observaciones || '<span class="muted">Sin observaciones</span>'}</div>
+          </div>
+        </div>
+      `;
+    }
+  };
+
+  window.addEventListener('load', () => App.init());
+</script>

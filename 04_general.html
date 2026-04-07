@@ -1,0 +1,84 @@
+<div id="summaryStrip" class="summary-strip"></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Parámetros generales</div>
+    <div class="card-subtitle">Primero registra ciclos manualmente y luego elige el ciclo actual.</div>
+
+    <div class="form-row">
+      <div>
+        <label class="muted">Año académico</label>
+        <input id="cfg_anio_actual" placeholder="Ej. 2026" onchange="GeneralPage.updateYear()">
+      </div>
+      <div>
+        <label class="muted">Ciclo actual</label>
+        <select id="cfg_ciclo_actual" onchange="GeneralPage.updateCurrentSelector()"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card soft">
+    <div class="card-title">Agregar ciclo manual</div>
+    <div class="card-subtitle">Para este ajuste, el manejo de ciclos queda manual para evitar complejidad innecesaria.</div>
+
+    <div class="form-row">
+      <div>
+        <label class="muted">Año</label>
+        <input id="cycle_anio" placeholder="Ej. 2026">
+      </div>
+      <div>
+        <label class="muted">Nombre ciclo</label>
+        <input id="cycle_nombre" placeholder="Ej. 2026-I">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" onclick="GeneralPage.addManualCycle()">Agregar ciclo</button>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+  <div class="card-title">Ciclos registrados</div>
+  <div class="card-subtitle">Se mantienen por orden. Si pegas currícula con `CICLO I`, `CICLO II`, etc., se resolverá por este orden.</div>
+  <div id="cyclesTableBox"></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Procesamiento por bloque</div>
+    <div class="card-subtitle">Pega aquí la currícula en 4 columnas: ciclo, código, nombre y créditos.</div>
+
+    <textarea id="paste_curricula" class="paste-box" placeholder="Ejemplo:
+CICLO I	MTD-101	Diseño Empresarial para lo Digital I	4
+CICLO I	MTD-102	Trabajo de Investigación I	4"></textarea>
+
+    <div class="btn-row">
+      <button class="btn dark" onclick="GeneralPage.processBlockPaste()">Procesar bloque</button>
+    </div>
+  </div>
+
+  <div class="card soft">
+    <div class="card-title">Vista previa de cursos activos</div>
+    <div class="card-subtitle">
+      Ciclo actual:
+      <strong id="previewCycleLabel">-</strong>
+      <span class="inline-tag"><span id="previewCountLabel">0</span> activos</span>
+    </div>
+
+    <div id="previewTabsBox"></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <div class="card-title">Currícula del ciclo actual</div>
+  <div class="card-subtitle">Todo se edita localmente en RAM. Solo se persiste al guardar configuración.</div>
+  <div id="curriculaTableBox"></div>
+</div>
+
+<div class="sticky-save-bar">
+  <div class="sticky-save-inner">
+    <div id="dirtyStatus" class="clean-badge">Todo guardado</div>
+    <button class="btn primary" onclick="GeneralPage.saveAll()">Guardar configuración</button>
+  </div>
+</div>

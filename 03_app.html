@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('03_css'); ?>
+</head>
+<body>
+  <div class="layout">
+    <div class="sidebar collapsed" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Maestría SPA</span>
+        <button class="toggle-btn" onclick="App.toggleSidebar()" title="Colapsar/Expandir Menú">☰</button>
+      </div>
+
+      <div class="nav-section-title">CONFIGURACIÓN</div>
+      <button class="nav-btn active" onclick="App.navegarA('General', this)" title="Configuración General">
+        <i>⚙️</i> <span class="nav-text">Configuración General</span>
+      </button>
+
+      <div class="nav-section-title">OPERACIÓN</div>
+      <button class="nav-btn" onclick="App.navegarA('Cursos', this)" title="Cursos Activos">
+        <i>📚</i> <span class="nav-text">Cursos Activos</span>
+      </button>
+    </div>
+
+    <div class="content">
+      <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <h3 style="color:#1a73e8; margin:0;">Iniciando Sistema...</h3>
+        <p style="color:#666; font-size:12px;">Sincronizando base de datos en RAM</p>
+      </div>
+
+      <div id="view-General" class="view active"><?!= include('04_general'); ?></div>
+      <div id="view-Cursos" class="view"><?!= include('04_cursos'); ?></div>
+    </div>
+  </div>
+
+  <?!= include('03_js'); ?>
+</body>
+</html>
