@@ -52,11 +52,11 @@ function ensureSheets_() {
     },
     {
       name: CONFIG.SHEETS.GENERAL_CICLOS,
-      headers: ['id_ciclo', 'anio', 'nombre_ciclo', 'orden', 'activo', 'creado']
+      headers: ['id_ciclo', 'anio', 'nombre_ciclo', 'orden', 'activo', 'creado', 'meta_json']
     },
     {
       name: CONFIG.SHEETS.GENERAL_CURRICULA,
-      headers: ['id_curricula', 'ciclo', 'codigo', 'nombre', 'creditos', 'activo', 'orden', 'dias', 'horario', 'link', 'observaciones', 'creado']
+      headers: ['id_curricula', 'ciclo', 'codigo', 'nombre', 'creditos', 'activo', 'orden', 'dias', 'horario', 'link', 'observaciones', 'creado', 'meta_json']
     }
   ];
 

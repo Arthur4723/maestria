@@ -1,84 +1,46 @@
-<div id="summaryStrip" class="summary-strip"></div>
-
-<div class="grid-2">
-  <div class="card">
-    <div class="card-title">Parámetros generales</div>
-    <div class="card-subtitle">Primero registra ciclos manualmente y luego elige el ciclo actual.</div>
-
-    <div class="form-row">
-      <div>
-        <label class="muted">Año académico</label>
-        <input id="cfg_anio_actual" placeholder="Ej. 2026" onchange="GeneralPage.updateYear()">
-      </div>
-      <div>
-        <label class="muted">Ciclo actual</label>
-        <select id="cfg_ciclo_actual" onchange="GeneralPage.updateCurrentSelector()"></select>
-      </div>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border-soft); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+  <div>
+    <div style="font-size: 16px; font-weight: 800; color: var(--bg-accent);">Panel Central de Configuración</div>
+    <div style="font-size: 12px; color: var(--text-soft); margin-top: 4px;">Define los ciclos y asigna los cursos. Todo se sincroniza con Google Sheets.</div>
   </div>
+  <button id="btn_master_save" class="btn primary" onclick="App.syncToCloud()" style="padding: 12px 24px; font-size: 14px; font-weight: bold;">
+    💾 Sincronizar Base de Datos
+  </button>
+</div>
 
-  <div class="card soft">
-    <div class="card-title">Agregar ciclo manual</div>
-    <div class="card-subtitle">Para este ajuste, el manejo de ciclos queda manual para evitar complejidad innecesaria.</div>
-
-    <div class="form-row">
-      <div>
-        <label class="muted">Año</label>
-        <input id="cycle_anio" placeholder="Ej. 2026">
-      </div>
-      <div>
-        <label class="muted">Nombre ciclo</label>
-        <input id="cycle_nombre" placeholder="Ej. 2026-I">
+<div style="display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start;">
+  
+  <div style="display: flex; flex-direction: column; gap: 16px; position: sticky; top: 0;">
+    <div class="card" style="border-left: 4px solid var(--bg-primary); padding: 14px;">
+      <div class="card-title" style="font-size:13px; color:var(--bg-primary);">🌍 1. Entorno Global</div>
+      <div class="form-row" style="grid-template-columns: 1fr;">
+        <div>
+          <label class="muted">Año Base de Trabajo</label>
+          <input id="cfg_anio_actual" type="number" onchange="GeneralPage.updateYear()" style="font-weight:bold;">
+        </div>
+        <div>
+          <label class="muted">Ciclo Operativo Actual</label>
+          <select id="cfg_ciclo_actual" onchange="GeneralPage.updateCurrentSelector()" style="font-weight:bold; color:var(--bg-primary); background:#eef2ff; border-color:#a5b4fc;"></select>
+        </div>
       </div>
     </div>
 
-    <div class="btn-row">
-      <button class="btn primary" onclick="GeneralPage.addManualCycle()">Agregar ciclo</button>
-    </div>
-  </div>
-</div>
-
-<div class="card" style="margin-bottom:16px;">
-  <div class="card-title">Ciclos registrados</div>
-  <div class="card-subtitle">Se mantienen por orden. Si pegas currícula con `CICLO I`, `CICLO II`, etc., se resolverá por este orden.</div>
-  <div id="cyclesTableBox"></div>
-</div>
-
-<div class="grid-2">
-  <div class="card">
-    <div class="card-title">Procesamiento por bloque</div>
-    <div class="card-subtitle">Pega aquí la currícula en 4 columnas: ciclo, código, nombre y créditos.</div>
-
-    <textarea id="paste_curricula" class="paste-box" placeholder="Ejemplo:
-CICLO I	MTD-101	Diseño Empresarial para lo Digital I	4
-CICLO I	MTD-102	Trabajo de Investigación I	4"></textarea>
-
-    <div class="btn-row">
-      <button class="btn dark" onclick="GeneralPage.processBlockPaste()">Procesar bloque</button>
+    <div class="card" style="padding: 14px; display: flex; flex-direction: column; max-height: 400px;">
+      <div class="card-title" style="font-size:13px;">📅 2. Grupos Académicos</div>
+      <div class="card-subtitle" style="margin-bottom:8px;">Selecciona para editar a la derecha.</div>
+      <div id="cyclesTableBox" style="overflow-y: auto; flex:1; margin:-8px; padding:8px;"></div>
     </div>
   </div>
 
-  <div class="card soft">
-    <div class="card-title">Vista previa de cursos activos</div>
-    <div class="card-subtitle">
-      Ciclo actual:
-      <strong id="previewCycleLabel">-</strong>
-      <span class="inline-tag"><span id="previewCountLabel">0</span> activos</span>
+  <div style="display: flex; flex-direction: column; gap: 16px;">
+    <div class="card soft" id="cycleMetaPanel" style="padding: 16px; border: 1px solid #c7d2fe;">
+      <div class="empty-state">Selecciona un grupo en la columna izquierda para configurar.</div>
     </div>
 
-    <div id="previewTabsBox"></div>
-  </div>
-</div>
-
-<div class="card" style="margin-top:16px;">
-  <div class="card-title">Currícula del ciclo actual</div>
-  <div class="card-subtitle">Todo se edita localmente en RAM. Solo se persiste al guardar configuración.</div>
-  <div id="curriculaTableBox"></div>
-</div>
-
-<div class="sticky-save-bar">
-  <div class="sticky-save-inner">
-    <div id="dirtyStatus" class="clean-badge">Todo guardado</div>
-    <button class="btn primary" onclick="GeneralPage.saveAll()">Guardar configuración</button>
+    <div class="card" style="padding: 16px; display: flex; flex-direction: column;">
+      <div class="card-title" style="font-size:14px; color:#047857;">📋 3. Cursos del Grupo Seleccionado</div>
+      <div class="card-subtitle">Asigna los cursos a los ciclos.</div>
+      <div id="curriculaTableBox" style="overflow-y: auto; max-height: 350px; border: 1px solid var(--border-soft); border-radius: 8px;"></div>
+    </div>
   </div>
 </div>
