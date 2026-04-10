@@ -1,50 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+  <meta charset="UTF-8">
   <base target="_top">
   <?!= include('03_css'); ?>
 </head>
 <body>
   <div class="app-shell">
-    <div class="sidebar" id="sidebar">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-        <span class="brand">Maestría SPA</span>
-        <button class="toggle-btn" onclick="App.toggleSidebar()" title="Colapsar/Expandir">☰</button>
+    
+    <nav class="sidebar collapsed" id="sidebar">
+      <div class="sidebar-header">
+        <span class="brand">
+          <span class="brand-text">Maestría SPA</span>
+        </span>
+        <button class="toggle-btn" onclick="App.UI.toggleSidebar()" title="Colapsar/Expandir">☰</button>
       </div>
 
       <div class="nav-group">
-        <div class="nav-section-title">CONFIGURACIÓN</div>
-        <button id="btn-nav-general" class="nav-btn active" onclick="App.go('general')">
-          <span style="font-size:16px;">⚙️</span> <span class="nav-text">Base de Control</span>
+        <button id="btn-nav-general" class="nav-btn active" onclick="App.Router.go('general')">
+          <span class="nav-icon">⚙️</span> <span class="nav-text">Configuración</span>
         </button>
 
-        <div class="nav-section-title">CURSOS ACTIVOS</div>
-        <div id="dynamic-sidebar-courses" style="display:flex; flex-direction:column; gap:4px;"></div>
+        <button id="btn-nav-cursos" class="nav-btn" onclick="App.Router.go('cursos')">
+          <span class="nav-icon">🎓</span> <span class="nav-text">Cursos Activos</span>
+        </button>
       </div>
       
-      <div style="margin-top:auto; padding:12px; background:rgba(0,0,0,0.2); border-radius:8px; text-align:center; font-size:11px;" id="cloudStatus">
-        ☁️ Nube Sincronizada
+      <div class="cloud-status" id="cloudStatus">
+        ☁️ RAM Sincronizada
       </div>
-    </div>
+    </nav>
 
-    <div class="main">
+    <main class="main">
       <div class="view-wrap">
         <div class="view-container" id="viewContainer"></div>
 
         <div id="loaderOverlay" class="loader-overlay">
-          <div style="background:#fff; padding:20px 30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); text-align:center;">
-            <h3 style="color:#2563eb; margin:0 0 8px 0;" id="loaderTitle">Sincronizando...</h3>
-            <p style="color:#64748b; font-size:13px; margin:0;" id="loaderSub">Leyendo Base de Datos</p>
+          <div class="loader-card">
+            <div class="loader-icon">🔄</div>
+            <h3 id="loaderTitle">Iniciando Sistema</h3>
+            <p id="loaderSub">Construyendo arquitectura en memoria...</p>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 
   <template id="tpl-general"><?!= include('04_general'); ?></template>
-  <template id="tpl-cursos">
-    <div id="courseMasterPanel"></div>
-  </template>
+  <template id="tpl-cursos"><?!= include('04_cursos'); ?></template>
 
   <?!= include('03_js'); ?>
 </body>

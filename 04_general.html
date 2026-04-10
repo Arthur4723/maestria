@@ -1,46 +1,196 @@
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid var(--border-soft); box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
-  <div>
-    <div style="font-size: 16px; font-weight: 800; color: var(--bg-accent);">Panel Central de Configuración</div>
-    <div style="font-size: 12px; color: var(--text-soft); margin-top: 4px;">Define los ciclos y asigna los cursos. Todo se sincroniza con Google Sheets.</div>
-  </div>
-  <button id="btn_master_save" class="btn primary" onclick="App.syncToCloud()" style="padding: 12px 24px; font-size: 14px; font-weight: bold;">
-    💾 Sincronizar Base de Datos
-  </button>
+<div class="module-header" style="margin-bottom: 24px;">
+  <h2 style="margin: 0; color: #1e293b; font-size: 24px;">Configuración General</h2>
+  <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;">Define el marco académico, gestiona ciclos y administra la currícula.</p>
 </div>
 
-<div style="display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start;">
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
   
-  <div style="display: flex; flex-direction: column; gap: 16px; position: sticky; top: 0;">
-    <div class="card" style="border-left: 4px solid var(--bg-primary); padding: 14px;">
-      <div class="card-title" style="font-size:13px; color:var(--bg-primary);">🌍 1. Entorno Global</div>
-      <div class="form-row" style="grid-template-columns: 1fr;">
-        <div>
-          <label class="muted">Año Base de Trabajo</label>
-          <input id="cfg_anio_actual" type="number" onchange="GeneralPage.updateYear()" style="font-weight:bold;">
+  <div style="display: flex; flex-direction: column; gap: 24px;">
+    
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+      <h3 style="margin: 0 0 16px 0; font-size: 16px; color: #334155; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">1. Parámetros del Sistema</h3>
+      
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">Año Académico Actual</label>
+        <input type="number" id="gen-anio" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="Ej. 2025">
+      </div>
+      
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 12px; color: #64748b; margin-bottom: 4px;">Ciclo Vigente (Activo)</label>
+        <select id="gen-ciclo-actual" class="form-control" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <option value="">Seleccione un ciclo...</option>
+        </select>
+      </div>
+
+      <button onclick="ModuleGeneral.saveConfig()" style="width: 100%; padding: 10px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+        Guardar Parámetros
+      </button>
+    </div>
+
+    <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 16px; color: #334155;">2. Ciclos Registrados</h3>
+        <button style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">+ Nuevo Ciclo</button>
+      </div>
+      
+      <div id="gen-ciclos-list" style="display: flex; flex-direction: column; gap: 8px;">
         </div>
-        <div>
-          <label class="muted">Ciclo Operativo Actual</label>
-          <select id="cfg_ciclo_actual" onchange="GeneralPage.updateCurrentSelector()" style="font-weight:bold; color:var(--bg-primary); background:#eef2ff; border-color:#a5b4fc;"></select>
-        </div>
+    </div>
+
+  </div>
+
+  <div style="background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 16px;">
+      <h3 style="margin: 0; font-size: 16px; color: #334155;">3. Currícula Base</h3>
+      <div>
+        <button style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px;">
+          📋 Carga por Bloque
+        </button>
+        <button style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+          + Añadir Curso
+        </button>
       </div>
     </div>
-
-    <div class="card" style="padding: 14px; display: flex; flex-direction: column; max-height: 400px;">
-      <div class="card-title" style="font-size:13px;">📅 2. Grupos Académicos</div>
-      <div class="card-subtitle" style="margin-bottom:8px;">Selecciona para editar a la derecha.</div>
-      <div id="cyclesTableBox" style="overflow-y: auto; flex:1; margin:-8px; padding:8px;"></div>
+    
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+        <thead>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+            <th style="padding: 10px; color: #475569;">Cód</th>
+            <th style="padding: 10px; color: #475569;">Curso</th>
+            <th style="padding: 10px; color: #475569;">Créd</th>
+            <th style="padding: 10px; color: #475569;">Activo</th>
+            <th style="padding: 10px; color: #475569;">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="gen-curricula-table">
+          </tbody>
+      </table>
+    </div>
+    
+    <div id="gen-curricula-empty" style="display: none; text-align: center; padding: 40px 20px;">
+      <span style="font-size: 32px; display: block; margin-bottom: 12px;">📚</span>
+      <h4 style="margin: 0 0 8px 0; color: #475569;">Sin currícula registrada</h4>
+      <p style="margin: 0; color: #94a3b8; font-size: 13px;">Utiliza la carga por bloque para añadir tus cursos.</p>
     </div>
   </div>
 
-  <div style="display: flex; flex-direction: column; gap: 16px;">
-    <div class="card soft" id="cycleMetaPanel" style="padding: 16px; border: 1px solid #c7d2fe;">
-      <div class="empty-state">Selecciona un grupo en la columna izquierda para configurar.</div>
-    </div>
-
-    <div class="card" style="padding: 16px; display: flex; flex-direction: column;">
-      <div class="card-title" style="font-size:14px; color:#047857;">📋 3. Cursos del Grupo Seleccionado</div>
-      <div class="card-subtitle">Asigna los cursos a los ciclos.</div>
-      <div id="curriculaTableBox" style="overflow-y: auto; max-height: 350px; border: 1px solid var(--border-soft); border-radius: 8px;"></div>
-    </div>
-  </div>
 </div>
+
+<script>
+/**
+ * CONTROLADOR LOCAL: ModuleGeneral
+ * Este objeto existe en memoria, pero solo interactúa con el DOM de este HTML.
+ */
+const ModuleGeneral = {
+  
+  // Función de arranque llamada por el Enrutador
+  init: function() {
+    console.log("Inicializando Módulo General...");
+    this.renderParametros();
+    this.renderCiclos();
+    this.renderCurricula();
+  },
+
+  renderParametros: function() {
+    const config = App.State.config;
+    const ciclos = App.State.ciclos;
+    
+    // Set Año
+    document.getElementById('gen-anio').value = config['anio_actual'] || '';
+
+    // Llenar Dropdown de Ciclos
+    const select = document.getElementById('gen-ciclo-actual');
+    select.innerHTML = '<option value="">Seleccione un ciclo...</option>';
+    
+    ciclos.sort((a, b) => a.orden - b.orden).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id_ciclo;
+      opt.textContent = `${c.nombre_ciclo} (${c.anio})`;
+      if(config['ciclo_actual'] === c.id_ciclo) opt.selected = true;
+      select.appendChild(opt);
+    });
+  },
+
+  renderCiclos: function() {
+    const ciclos = App.State.ciclos;
+    const container = document.getElementById('gen-ciclos-list');
+    container.innerHTML = '';
+
+    if (ciclos.length === 0) {
+      container.innerHTML = '<div style="font-size:12px; color:#94a3b8; text-align:center; padding:10px;">No hay ciclos registrados</div>';
+      return;
+    }
+
+    ciclos.sort((a, b) => a.orden - b.orden).forEach(c => {
+      const isCurrent = (c.id_ciclo === App.State.config['ciclo_actual']);
+      container.innerHTML += `
+        <div style="display: flex; justify-content: space-between; padding: 10px; background: ${isCurrent ? '#eff6ff' : '#f8fafc'}; border: 1px solid ${isCurrent ? '#bfdbfe' : '#e2e8f0'}; border-radius: 6px;">
+          <div>
+            <span style="font-weight: 600; color: #334155; font-size: 13px;">${c.nombre_ciclo}</span>
+            <span style="font-size: 11px; color: #64748b; margin-left: 8px;">Año: ${c.anio}</span>
+          </div>
+          ${isCurrent ? '<span style="font-size: 10px; background: #3b82f6; color: white; padding: 2px 6px; border-radius: 10px;">ACTIVO</span>' : ''}
+        </div>
+      `;
+    });
+  },
+
+  renderCurricula: function() {
+    const curricula = App.State.curricula;
+    const tbody = document.getElementById('gen-curricula-table');
+    const emptyState = document.getElementById('gen-curricula-empty');
+    
+    tbody.innerHTML = '';
+
+    if (curricula.length === 0) {
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    
+    curricula.sort((a, b) => a.orden - b.orden).forEach(curso => {
+      // Buscar nombre del ciclo para mostrarlo
+      const cicloObj = App.State.ciclos.find(c => c.id_ciclo === curso.ciclo);
+      const nombreCiclo = cicloObj ? cicloObj.nombre_ciclo : 'Desconocido';
+      
+      const isActive = curso.activo.toUpperCase() === 'SI';
+      const badgeColor = isActive ? '#10b981' : '#94a3b8';
+
+      tbody.innerHTML += `
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 10px; color: #64748b;">${curso.codigo || '-'}</td>
+          <td style="padding: 10px;">
+            <div style="font-weight: 500; color: #334155;">${curso.nombre}</div>
+            <div style="font-size: 11px; color: #94a3b8;">${nombreCiclo}</div>
+          </td>
+          <td style="padding: 10px; color: #64748b;">${curso.creditos || '-'}</td>
+          <td style="padding: 10px;">
+            <span style="background: ${badgeColor}20; color: ${badgeColor}; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
+              ${curso.activo}
+            </span>
+          </td>
+          <td style="padding: 10px;">
+            <button style="background: transparent; border: none; color: #3b82f6; cursor: pointer; font-size: 13px;">Editar</button>
+          </td>
+        </tr>
+      `;
+    });
+  },
+
+  saveConfig: function() {
+    // Aquí implementaremos luego la "Persistencia por Lote"
+    // Por ahora, actualiza el estado en RAM.
+    const nuevoAnio = document.getElementById('gen-anio').value;
+    const nuevoCiclo = document.getElementById('gen-ciclo-actual').value;
+    
+    App.State.config['anio_actual'] = nuevoAnio;
+    App.State.config['ciclo_actual'] = nuevoCiclo;
+    
+    alert("Parámetros guardados en memoria RAM. (La lógica de guardado en base de datos se conectará después).");
+    this.renderCiclos(); // Re-renderizar para mostrar la nueva etiqueta "ACTIVO"
+  }
+
+};
+</script>

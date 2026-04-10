@@ -1,3 +1,40 @@
+// ==========================================
+// 1. CONSTANTES GLOBALES
+// ==========================================
+const CONFIG = {
+  APP_TITLE: 'Maestría SPA',
+  TITLE: 'Maestría SPA',
+  SHEETS: {
+    GENERAL_CONFIG: 'GENERAL_CONFIG',
+    GENERAL_CICLOS: 'GENERAL_CICLOS',
+    GENERAL_CURRICULA: 'GENERAL_CURRICULA'
+  },
+  CONFIG_KEYS: {
+    ANIO_ACTUAL: 'anio_actual',
+    NUMERO_CICLOS: 'numero_ciclos',
+    CICLO_ACTUAL: 'ciclo_actual'
+  }
+};
+
+// ==========================================
+// 2. INICIALIZACIÓN DE LA SPA
+// ==========================================
+function doGet(e) {
+  ensureSheets_(); 
+  return HtmlService.createTemplateFromFile('03_app')
+    .evaluate()
+    .setTitle(CONFIG.APP_TITLE)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// ==========================================
+// 3. FUNCIONES CORE DE BASE DE DATOS (BLINDADAS)
+// ==========================================
 function getSheet_(sheetName) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sh = ss.getSheetByName(sheetName);
@@ -8,7 +45,7 @@ function getSheet_(sheetName) {
 function getHeaders_(sheetName) {
   const sh = getSheet_(sheetName);
   if (sh.getLastRow() === 0 || sh.getLastColumn() === 0) return [];
-  return sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  return sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0];
 }
 
 function getAllRows_(sheetName) {
@@ -17,12 +54,13 @@ function getAllRows_(sheetName) {
   const lastCol = sh.getLastColumn();
   if (lastRow < 2 || lastCol < 1) return [];
 
-  const values = sh.getRange(1, 1, lastRow, lastCol).getValues();
+  // SOLUCIÓN AL ERROR 10: getDisplayValues() asegura que no viajen objetos Date incompatibles
+  const values = sh.getRange(1, 1, lastRow, lastCol).getDisplayValues();
   const headers = values[0];
 
   return values
     .slice(1)
-    .filter(r => r.join('') !== '')
+    .filter(r => r.join('') !== '') // Ignora filas completamente vacías
     .map(row => {
       const obj = {};
       headers.forEach((h, i) => obj[h] = row[i]);
@@ -46,18 +84,9 @@ function replaceAllRows_(sheetName, headers, rows) {
 function ensureSheets_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const defs = [
-    {
-      name: CONFIG.SHEETS.GENERAL_CONFIG,
-      headers: ['clave', 'valor']
-    },
-    {
-      name: CONFIG.SHEETS.GENERAL_CICLOS,
-      headers: ['id_ciclo', 'anio', 'nombre_ciclo', 'orden', 'activo', 'creado', 'meta_json']
-    },
-    {
-      name: CONFIG.SHEETS.GENERAL_CURRICULA,
-      headers: ['id_curricula', 'ciclo', 'codigo', 'nombre', 'creditos', 'activo', 'orden', 'dias', 'horario', 'link', 'observaciones', 'creado', 'meta_json']
-    }
+    { name: CONFIG.SHEETS.GENERAL_CONFIG, headers: ['clave', 'valor'] },
+    { name: CONFIG.SHEETS.GENERAL_CICLOS, headers: ['id_ciclo', 'anio', 'nombre_ciclo', 'orden', 'activo', 'creado', 'meta_json'] },
+    { name: CONFIG.SHEETS.GENERAL_CURRICULA, headers: ['id_curricula', 'ciclo', 'codigo', 'nombre', 'creditos', 'activo', 'orden', 'dias', 'horario', 'link', 'observaciones', 'creado', 'meta_json'] }
   ];
 
   defs.forEach(def => {
@@ -66,12 +95,6 @@ function ensureSheets_() {
       sh = ss.insertSheet(def.name);
       sh.getRange(1, 1, 1, def.headers.length).setValues([def.headers]);
       sh.setFrozenRows(1);
-    } else {
-      const currentHeaders = getHeaders_(def.name);
-      if (!currentHeaders.length) {
-        sh.getRange(1, 1, 1, def.headers.length).setValues([def.headers]);
-        sh.setFrozenRows(1);
-      }
     }
   });
 

@@ -1,7 +1,499 @@
-<div class="card">
-  <div class="card-title">Cursos activos del ciclo actual</div>
-  <div class="card-subtitle">Las pestañas se generan automáticamente desde la currícula activa.</div>
-  <div id="courseTabsBox" class="tabs-bar"></div>
+<div class="courses-module" style="display: flex; flex-direction: column; height: 100%;">
+  
+  <div id="cursos-empty-state" style="display: none; text-align: center; padding: 60px 20px; background: #fff; border-radius: 12px; border: 1px dashed #cbd5e1;">
+    <span style="font-size: 40px; display: block; margin-bottom: 16px;">📭</span>
+    <h3 style="margin: 0 0 8px 0; color: #334155;">No hay cursos activos en este ciclo</h3>
+    <button onclick="App.Router.go('general')" style="margin-top: 16px; padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      Ir a Configuración
+    </button>
+  </div>
+
+  <div id="cursos-workspace" style="display: none; flex-direction: column; height: 100%;">
+    
+    <div id="cursos-tabs-container" style="display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #e2e8f0; margin-bottom: 0; padding-top: 8px; flex-shrink: 0;"></div>
+
+    <div id="curso-active-content" style="background: #fff; border-radius: 0 12px 12px 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-top: none; display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+      
+      <div style="padding: 20px 24px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0;">
+        <div>
+          <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+            <span id="curso-codigo-view" style="font-size: 12px; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe;">CÓDIGO</span>
+            <span id="curso-creditos-view" style="font-size: 12px; font-weight: 600; color: #10b981; background: #ecfdf5; padding: 2px 8px; border-radius: 4px; border: 1px solid #a7f3d0;">Créditos</span>
+            <span id="curso-horario-view" style="font-size: 12px; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">Horario</span>
+          </div>
+          <h2 id="curso-nombre-view" style="margin: 0; color: #0f172a; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Nombre del Curso</h2>
+          
+          <div id="curso-action-links" style="display: flex; gap: 8px; margin-top: 12px;">
+            </div>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 16px;">
+          
+          <div style="display: flex; align-items: center; gap: 10px; background: #fff; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <span style="font-size: 12px; font-weight: 700; color: #475569;">Modo Edición</span>
+            <label class="switch">
+              <input type="checkbox" id="edit-mode-switch" onchange="ModuleCursos.handleSwitch(this.checked)">
+              <span class="slider"></span>
+            </label>
+            <button id="btn-save-edit" onclick="ModuleCursos.saveCurrentView()" style="display: none; background: #10b981; color: white; border: none; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s;">💾 Guardar</button>
+          </div>
+
+          <div style="display: flex; gap: 4px; background: #e2e8f0; padding: 4px; border-radius: 8px;">
+            <button id="subtab-inicio" onclick="ModuleCursos.switchSubTab('inicio')" class="subtab-btn active">🏠 Dashboard Global</button>
+            <button id="subtab-sesiones" onclick="ModuleCursos.switchSubTab('sesiones')" class="subtab-btn">📅 16 Sesiones</button>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; position: relative;">
+        
+        <div id="view-inicio" style="padding: 24px; display: block;">
+          
+          <div class="edit-only" style="margin-bottom: 24px; background: #fffbeb; padding: 16px; border: 1px solid #fde68a; border-radius: 8px;">
+            <h4 style="margin: 0 0 12px 0; color: #92400e; font-size: 14px;">Configuración Logística del Curso</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+              <div><label class="form-label">Fecha Inicio</label><input type="date" id="inicio-fecha" class="form-input"></div>
+              <div><label class="form-label">Horario</label><input type="text" id="inicio-hora" class="form-input"></div>
+              <div><label class="form-label">Enlace Clase (Zoom/Meet)</label><input type="url" id="inicio-zoom" class="form-input"></div>
+              <div><label class="form-label">Carpeta Drive</label><input type="url" id="inicio-drive" class="form-input"></div>
+              <div style="grid-column: span 2;"><label class="form-label">Enlace Asistente IA Global (ChatGPT)</label><input type="url" id="inicio-ia" class="form-input"></div>
+            </div>
+          </div>
+
+          <div class="grid-2-col">
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div class="op-card">
+                <div class="card-header">
+                  <h4 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 6px;">🎯 Tareas y Entregables Globales</h4>
+                  <button class="btn-add edit-only" onclick="ModuleCursos.addGeneralItem('tareas')">+ Añadir Tarea</button>
+                </div>
+                <div id="list-inicio-tareas" style="display: flex; flex-direction: column; gap: 8px;"></div>
+              </div>
+
+              <div class="op-card">
+                <div class="card-header">
+                  <h4 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 6px;">📚 Materiales del Curso</h4>
+                  <button class="btn-add edit-only" onclick="ModuleCursos.addGeneralItem('materiales')">+ Añadir Material</button>
+                </div>
+                <div id="list-inicio-materiales" style="display: flex; flex-direction: column; gap: 8px;"></div>
+              </div>
+            </div>
+
+            <div class="op-card" style="display: flex; flex-direction: column;">
+              <h4 style="margin: 0 0 12px 0; color: #1e293b; display: flex; align-items: center; gap: 6px;">📝 Notas Generales del Curso</h4>
+              <div id="inicio-notas-read" class="read-only" style="white-space: pre-wrap; font-size: 13px; color: #475569; flex: 1;"></div>
+              <textarea id="inicio-notas-edit" class="edit-only form-input" style="flex: 1; min-height: 300px; resize: none;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-sesiones" style="display: none; height: 100%;">
+          <div style="display: flex; height: 100%;">
+            
+            <div style="width: 220px; border-right: 1px solid #e2e8f0; background: #f8fafc; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px;" id="sesiones-sidebar-list">
+              </div>
+
+            <div style="flex: 1; padding: 24px; overflow-y: auto;">
+              
+              <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
+                <h3 id="day-title" style="margin: 0 0 8px 0; color: #0f172a; font-size: 20px;">Día X: Tema</h3>
+                
+                <div class="read-only" id="day-date-read" style="color: #64748b; font-size: 13px;">Fecha: -</div>
+                <div class="edit-only" style="display: flex; gap: 12px; align-items: center; margin-top: 8px;">
+                  <input type="text" id="day-tema-edit" class="form-input" placeholder="Tema de la sesión (Opcional)" style="flex: 1; margin: 0;">
+                  <input type="date" id="day-date-edit" class="form-input" style="width: 150px; margin: 0;" title="Fecha de la sesión">
+                </div>
+              </div>
+
+              <div class="op-card">
+                <div class="card-header">
+                  <h4 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 6px;">📂 Elementos de la Sesión</h4>
+                  <button class="btn-add edit-only" onclick="ModuleCursos.addDayResource()">+ Añadir Elemento</button>
+                </div>
+                
+                <div id="day-resources-read" class="read-only" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <div id="day-resources-edit" class="edit-only" style="display: flex; flex-direction: column; gap: 12px;"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>
 
-<div id="courseDetailPanel" style="margin-top:16px;"></div>
+<style>
+/* CLASES ESTRUCTURALES Y UI */
+.tab-btn { flex: 1 1 auto; min-width: 120px; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-bottom: none; color: #64748b; font-weight: 600; cursor: pointer; border-radius: 8px 8px 0 0; font-size: 13px; outline: none; transition: all 0.2s; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.tab-btn:hover { background: #e2e8f0; color: #2563eb; }
+.tab-btn.active { background: #fff; border-bottom: 2px solid #fff; color: #2563eb; font-weight: 800; transform: translateY(1px); z-index: 2; border-color: #e2e8f0; }
+
+.subtab-btn { padding: 6px 12px; background: transparent; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s;}
+.subtab-btn:hover { background: #cbd5e1; }
+.subtab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+/* Switch Style */
+.switch { position: relative; display: inline-block; width: 36px; height: 18px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 18px; }
+.slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+input:checked + .slider { background-color: #2563eb; }
+input:checked + .slider:before { transform: translateX(18px); }
+
+.grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.op-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+
+.btn-add { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
+.form-label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+.form-input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box; }
+.form-input:focus { border-color: #3b82f6; outline: none; }
+
+.day-btn { padding: 10px; background: transparent; border: 1px solid transparent; border-radius: 6px; text-align: left; cursor: pointer; font-size: 13px; color: #475569; transition: all 0.2s; font-weight: 500;}
+.day-btn:hover { background: #e2e8f0; }
+.day-btn.active { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; font-weight: 700; }
+
+.resource-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #334155; text-decoration: none; transition: transform 0.2s;}
+.resource-chip:hover { transform: translateY(-1px); border-color: #cbd5e1; }
+.resource-row { display: flex; gap: 8px; align-items: center; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1; }
+
+.edit-mode-active .read-only { display: none !important; }
+.edit-mode-active .edit-only { display: flex !important; }
+.edit-only { display: none; } 
+</style>
+
+<script>
+const ModuleCursos = {
+  currentCursoId: null,
+  currentSubView: 'inicio',
+  currentDayNum: 1,
+  isEditing: false,
+  draftMeta: {}, 
+
+  init: function(cursoIdParam = null) {
+    const cursosActivos = App.State.cursosActivos;
+    if (!cursosActivos || cursosActivos.length === 0) {
+      document.getElementById('cursos-empty-state').style.display = 'block';
+      document.getElementById('cursos-workspace').style.display = 'none';
+      return;
+    }
+    document.getElementById('cursos-empty-state').style.display = 'none';
+    document.getElementById('cursos-workspace').style.display = 'flex';
+    
+    this.currentCursoId = cursoIdParam && cursosActivos.find(c => c.id_curricula === cursoIdParam) ? cursoIdParam : cursosActivos[0].id_curricula;
+    
+    // Aquí el orden es vital: Primero dibujamos las pestañas, luego CARGAMOS LOS DATOS (eso resetea la UI a lectura)
+    this.renderTabs();
+    this.loadCourseData();
+  },
+
+  switchTab: function(cursoId) {
+    if(this.isEditing) {
+      if(!confirm("Tienes cambios sin guardar. ¿Seguro que deseas cambiar de curso?")) return;
+    }
+    this.currentCursoId = cursoId;
+    this.currentSubView = 'inicio';
+    this.currentDayNum = 1;
+    this.renderTabs();
+    this.loadCourseData(); // Recarga y apaga la edición de forma segura
+  },
+
+  switchSubTab: function(viewName) {
+    if(this.isEditing) {
+      if(!confirm("Modo edición activo. Guarda los cambios antes de cambiar de vista.")) return;
+    }
+    this.currentSubView = viewName;
+    document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`subtab-${viewName}`).classList.add('active');
+    
+    document.getElementById('view-inicio').style.display = viewName === 'inicio' ? 'block' : 'none';
+    document.getElementById('view-sesiones').style.display = viewName === 'sesiones' ? 'block' : 'none';
+  },
+
+  renderTabs: function() {
+    const container = document.getElementById('cursos-tabs-container');
+    container.innerHTML = '';
+    const cursos = [...App.State.cursosActivos].sort((a, b) => a.orden - b.orden);
+
+    cursos.forEach(curso => {
+      const btn = document.createElement('button');
+      btn.onclick = () => this.switchTab(curso.id_curricula);
+      btn.className = (curso.id_curricula === this.currentCursoId) ? 'tab-btn active' : 'tab-btn';
+      btn.innerText = curso.nombre || curso.codigo;
+      container.appendChild(btn);
+    });
+  },
+
+  parseJsonSafely: function(str) {
+    try { return (str && str.trim() !== '') ? JSON.parse(str) : {}; } 
+    catch(e) { console.warn("Error parseando JSON", e); return {}; }
+  },
+
+  loadCourseData: function() {
+    const curso = App.State.cursosActivos.find(c => c.id_curricula === this.currentCursoId);
+    if (!curso) return;
+
+    // 1. Datos de las columnas raíz
+    document.getElementById('curso-codigo-view').innerText = curso.codigo || 'S/C';
+    document.getElementById('curso-creditos-view').innerText = curso.creditos ? `${curso.creditos} Créditos` : '-';
+    document.getElementById('curso-nombre-view').innerText = curso.nombre || 'Sin nombre';
+    
+    // 2. Parsear el meta_json
+    let meta = this.parseJsonSafely(curso.meta_json);
+    
+    // 3. Centralizar todo en draftMeta (Ahora los días, link y horario viven aquí)
+    this.draftMeta = {
+      dias: meta.dias || '',
+      hora: meta.horario || meta.hora || '19:00 - 22:00',
+      link: meta.link || '', 
+      fecha_inicio: meta.fecha_inicio || '',
+      drive: meta.drive || '',
+      sesiones: meta.sesiones || 16,
+      curso_ia_link: meta.curso_ia_link || '',
+      notas_generales: meta.notas_generales || '',
+      tareas: meta.tareas || [],
+      materiales: meta.materiales || [],
+      sesiones_detalle: meta.sesiones_detalle || {}
+    };
+
+    // Aseguramos 16 sesiones mínimas
+    for(let i=1; i<=this.draftMeta.sesiones; i++) {
+      if(!this.draftMeta.sesiones_detalle[i]) {
+        this.draftMeta.sesiones_detalle[i] = { tema: '', fecha: '' }; 
+      }
+    }
+
+    document.getElementById('curso-horario-view').innerText = this.draftMeta.hora;
+
+    // 4. Inyección de Botones Principales (Leo del draftMeta)
+    const linksContainer = document.getElementById('curso-action-links');
+    linksContainer.innerHTML = '';
+    
+    if (this.draftMeta.link && this.draftMeta.link.trim() !== '') {
+      linksContainer.innerHTML += `<a href="${this.draftMeta.link}" target="_blank" class="resource-chip" style="background:#2563eb; color:#fff; border:none; font-weight:bold;"><span>📹</span> Clase en Vivo</a>`;
+    }
+    if (this.draftMeta.curso_ia_link && this.draftMeta.curso_ia_link.trim() !== '') {
+      linksContainer.innerHTML += `<a href="${this.draftMeta.curso_ia_link}" target="_blank" class="resource-chip" style="background:#8b5cf6; color:#fff; border:none; font-weight:bold;"><span>🤖</span> Asistente IA</a>`;
+    }
+    if (this.draftMeta.drive && this.draftMeta.drive.trim() !== '') {
+      linksContainer.innerHTML += `<a href="${this.draftMeta.drive}" target="_blank" class="resource-chip" style="background:#10b981; color:#fff; border:none; font-weight:bold;"><span>📁</span> Carpeta Drive</a>`;
+    }
+
+    // 5. Forzar estado de Solo Lectura al cargar datos nuevos
+    this.toggleEditMode(false);
+  },
+
+  handleSwitch: function(isChecked) {
+    if (isChecked) {
+      this.toggleEditMode(true);
+    } else {
+      if (confirm("¿Descartar cambios no guardados?")) {
+        this.cancelEdit();
+      } else {
+        document.getElementById('edit-mode-switch').checked = true; // Rebota el switch
+      }
+    }
+  },
+
+  cancelEdit: function() {
+    this.loadCourseData(); // Carga la data limpia y apaga el modo edición visualmente
+  },
+
+  toggleEditMode: function(isEdit) {
+    this.isEditing = isEdit;
+    const contentDiv = document.getElementById('curso-active-content');
+    const switchElement = document.getElementById('edit-mode-switch');
+    
+    if (switchElement && switchElement.checked !== isEdit) {
+      switchElement.checked = isEdit;
+    }
+
+    if(isEdit) {
+      contentDiv.classList.add('edit-mode-active');
+      document.getElementById('btn-save-edit').style.display = 'inline-block';
+      document.querySelectorAll('.subtab-btn').forEach(b => b.disabled = true);
+    } else {
+      contentDiv.classList.remove('edit-mode-active');
+      document.getElementById('btn-save-edit').style.display = 'none';
+      document.querySelectorAll('.subtab-btn').forEach(b => b.disabled = false);
+      
+      // Dibujar todo en limpio
+      this.renderInicioView();
+      this.renderSesionesSidebar();
+      this.renderDayContent();
+    }
+  },
+
+  renderInicioView: function() {
+    document.getElementById('inicio-fecha').value = this.draftMeta.fecha_inicio || '';
+    document.getElementById('inicio-hora').value = this.draftMeta.hora || '';
+    document.getElementById('inicio-zoom').value = this.draftMeta.link || '';
+    document.getElementById('inicio-drive').value = this.draftMeta.drive || '';
+    document.getElementById('inicio-ia').value = this.draftMeta.curso_ia_link || '';
+
+    document.getElementById('inicio-notas-read').innerText = this.draftMeta.notas_generales || 'No hay notas registradas.';
+    document.getElementById('inicio-notas-edit').value = this.draftMeta.notas_generales || '';
+
+    this.renderGeneralList('tareas', 'list-inicio-tareas');
+    this.renderGeneralList('materiales', 'list-inicio-materiales');
+  },
+
+  renderGeneralList: function(type, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const list = this.draftMeta[type] || [];
+
+    if(list.length === 0) {
+      container.innerHTML = `<span style="font-size: 12px; color: #94a3b8;">No hay ${type} registrados.</span>`;
+      return;
+    }
+
+    list.forEach((item, index) => {
+      let htmlRead = `<a href="${item.link}" target="_blank" class="resource-chip read-only"><span>${type === 'materiales' ? '📚' : '🎯'}</span> ${item.nombre}</a>`;
+      let htmlEdit = `
+        <div class="resource-row edit-only" style="width: 100%;">
+          <input type="text" class="form-input" value="${item.nombre}" onchange="ModuleCursos.updateGeneralItem('${type}', ${index}, 'nombre', this.value)" placeholder="Nombre" style="margin:0; width: 40%;">
+          <input type="url" class="form-input" value="${item.link}" onchange="ModuleCursos.updateGeneralItem('${type}', ${index}, 'link', this.value)" placeholder="Enlace URL" style="margin:0; flex:1;">
+          <button onclick="ModuleCursos.removeGeneralItem('${type}', ${index})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Eliminar">🗑️</button>
+        </div>`;
+      container.innerHTML += `<div style="display: flex; flex-direction: column;">${htmlRead}${htmlEdit}</div>`;
+    });
+  },
+
+  renderSesionesSidebar: function() {
+    const container = document.getElementById('sesiones-sidebar-list');
+    container.innerHTML = '';
+    
+    let baseDate = this.draftMeta.fecha_inicio ? new Date(this.draftMeta.fecha_inicio + 'T00:00:00') : null;
+
+    for(let i=1; i<=this.draftMeta.sesiones; i++) {
+      const s = this.draftMeta.sesiones_detalle[i] || {};
+      
+      let displayDate = s.fecha;
+      if(!displayDate && baseDate) {
+        let d = new Date(baseDate);
+        d.setDate(d.getDate() + (i - 1) * 7); 
+        displayDate = d.toISOString().split('T')[0]; 
+      }
+
+      const btn = document.createElement('button');
+      btn.className = (i === this.currentDayNum) ? 'day-btn active' : 'day-btn';
+      btn.onclick = () => { this.currentDayNum = i; this.renderDayContent(); this.renderSesionesSidebar(); };
+      
+      const hasContent = Object.keys(s).filter(k => k !== 'tema' && k !== 'fecha').length > 0;
+      btn.innerText = `${hasContent ? '🔵' : '⚪'} Día ${i}`;
+      container.appendChild(btn);
+    }
+  },
+
+  renderDayContent: function() {
+    const s = this.draftMeta.sesiones_detalle[this.currentDayNum] || {};
+    
+    let autoDate = '';
+    if(this.draftMeta.fecha_inicio) {
+        let d = new Date(this.draftMeta.fecha_inicio + 'T00:00:00');
+        d.setDate(d.getDate() + (this.currentDayNum - 1) * 7);
+        autoDate = d.toISOString().split('T')[0];
+    }
+    
+    const finalDate = s.fecha || autoDate;
+
+    document.getElementById('day-title').innerText = `Día ${this.currentDayNum}: ${s.tema || 'Tema por definir'}`;
+    document.getElementById('day-date-read').innerText = finalDate ? `📅 ${finalDate}` : 'Fecha no asignada';
+    document.getElementById('day-tema-edit').value = s.tema || '';
+    document.getElementById('day-date-edit').value = finalDate;
+
+    const readContainer = document.getElementById('day-resources-read');
+    const editContainer = document.getElementById('day-resources-edit');
+    readContainer.innerHTML = ''; editContainer.innerHTML = '';
+
+    const dynamicKeys = Object.keys(s).filter(k => k !== 'tema' && k !== 'fecha');
+
+    if(dynamicKeys.length === 0) {
+      readContainer.innerHTML = '<span style="font-size: 12px; color: #94a3b8;">No hay recursos agregados a esta sesión.</span>';
+    }
+
+    dynamicKeys.forEach(key => {
+      let icon = key.toLowerCase().includes('chat') ? '🤖' : (key.toLowerCase().includes('ppt') ? '🖥️' : '📄');
+      
+      readContainer.innerHTML += `
+        <a href="${s[key]}" target="_blank" class="resource-chip" style="width: fit-content;">
+          <span>${icon}</span> <strong>${key.toUpperCase()}:</strong> Abrir
+        </a>`;
+
+      editContainer.innerHTML += `
+        <div class="resource-row">
+          <input type="text" class="form-input" value="${key}" onchange="ModuleCursos.updateDayKey(${this.currentDayNum}, '${key}', this.value)" style="width: 140px; margin:0; font-weight:bold; color:#1e293b;" placeholder="Ej: borrador, practica...">
+          <input type="url" class="form-input" placeholder="Enlace del recurso" value="${s[key]}" onchange="ModuleCursos.updateDayVal(${this.currentDayNum}, '${key}', this.value)" style="flex:1; margin:0;">
+          <button onclick="ModuleCursos.removeDayResource(${this.currentDayNum}, '${key}')" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Eliminar">🗑️</button>
+        </div>`;
+    });
+  },
+
+  // Funciones Logísticas
+  addGeneralItem: function(type) {
+    if(!this.draftMeta[type]) this.draftMeta[type] = [];
+    this.draftMeta[type].push({ nombre: '', link: '' });
+    this.renderInicioView();
+  },
+  updateGeneralItem: function(type, index, field, value) {
+    this.draftMeta[type][index][field] = value;
+  },
+  removeGeneralItem: function(type, index) {
+    this.draftMeta[type].splice(index, 1);
+    this.renderInicioView();
+  },
+
+  addDayResource: function() {
+    let num = 1;
+    while(this.draftMeta.sesiones_detalle[this.currentDayNum][`nuevo_doc_${num}`] !== undefined) num++;
+    this.draftMeta.sesiones_detalle[this.currentDayNum][`nuevo_doc_${num}`] = "";
+    this.renderDayContent();
+  },
+  updateDayKey: function(dayNum, oldKey, newKey) {
+    if(!newKey || oldKey === newKey) return;
+    this.draftMeta.sesiones_detalle[dayNum][newKey] = this.draftMeta.sesiones_detalle[dayNum][oldKey];
+    delete this.draftMeta.sesiones_detalle[dayNum][oldKey];
+    this.renderDayContent();
+  },
+  updateDayVal: function(dayNum, key, val) {
+    this.draftMeta.sesiones_detalle[dayNum][key] = val;
+  },
+  removeDayResource: function(dayNum, key) {
+    delete this.draftMeta.sesiones_detalle[dayNum][key];
+    this.renderDayContent();
+  },
+
+  saveCurrentView: function() {
+    const cursoIndex = App.State.cursosActivos.findIndex(c => c.id_curricula === this.currentCursoId);
+    let curso = App.State.cursosActivos[cursoIndex];
+
+    if(this.currentSubView === 'inicio') {
+      this.draftMeta.fecha_inicio = document.getElementById('inicio-fecha').value;
+      this.draftMeta.hora = document.getElementById('inicio-hora').value;
+      this.draftMeta.link = document.getElementById('inicio-zoom').value;
+      this.draftMeta.drive = document.getElementById('inicio-drive').value;
+      this.draftMeta.curso_ia_link = document.getElementById('inicio-ia').value;
+      this.draftMeta.notas_generales = document.getElementById('inicio-notas-edit').value;
+    }
+    else if(this.currentSubView === 'sesiones') {
+      const temaVal = document.getElementById('day-tema-edit').value;
+      const dateVal = document.getElementById('day-date-edit').value;
+      
+      if(temaVal) this.draftMeta.sesiones_detalle[this.currentDayNum].tema = temaVal;
+      if(dateVal) this.draftMeta.sesiones_detalle[this.currentDayNum].fecha = dateVal;
+    }
+
+    curso.meta_json = JSON.stringify(this.draftMeta);
+    App.State.cursosActivos[cursoIndex] = curso;
+
+    alert("Operativa guardada en la RAM. La estructura JSON está optimizada.");
+    
+    // Al guardar, recargamos los datos para aplicar el modo lectura y refrescar botones superiores
+    this.loadCourseData();
+  }
+};
+</script>

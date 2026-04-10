@@ -1,70 +1,149 @@
 <style>
-  :root {
-    --bg-app: #f1f5f9; --bg-panel: #ffffff; --bg-soft: #f8fafc;
-    --bg-sidebar: #0f172a; --bg-primary: #2563eb; --bg-accent: #111827;
-    --text-main: #0f172a; --text-soft: #64748b; --text-light: #ffffff;
-    --border-soft: #e2e8f0; --shadow-panel: 0 4px 6px -1px rgba(0,0,0,0.05);
-    --radius-xl: 12px; --radius-lg: 8px; --radius-md: 6px;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100vh; font-family: 'Segoe UI', sans-serif; background: var(--bg-app); color: var(--text-main); overflow: hidden; }
+/* =========================================
+   ESTILOS GLOBALES Y VARIABLES CORE
+   ========================================= */
+:root {
+  --bg-body: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --primary: #2563eb;
+  --border: #e2e8f0;
+}
 
-  /* Layout Base */
-  .app-shell { display: flex; height: 100vh; width: 100vw; }
-  .sidebar { width: 260px; background: var(--bg-sidebar); color: var(--text-light); padding: 20px 16px; display: flex; flex-direction: column; transition: width .2s;}
-  .sidebar.collapsed { width: 70px; }
-  .sidebar .brand { font-size: 16px; font-weight: 700; white-space: nowrap; }
-  .sidebar.collapsed .brand, .sidebar.collapsed .nav-text, .sidebar.collapsed .nav-section-title { display: none; }
-  .toggle-btn { background: transparent; border: 0; color: var(--text-light); cursor: pointer; font-size: 16px; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-body);
+  color: var(--text-main);
+}
 
-  /* Menú */
-  .nav-group { flex: 1; overflow-y:auto; overflow-x:hidden;}
-  .nav-section-title { color: #94a3b8; font-size: 11px; font-weight: 700; letter-spacing: 1px; margin: 24px 0 8px 6px; text-transform: uppercase;}
-  .nav-btn { width: 100%; border: 0; border-radius: var(--radius-lg); background: transparent; color: var(--text-light); padding: 10px 12px; cursor: pointer; text-align: left; font-size: 13px; display: flex; align-items: center; gap: 10px; transition: background .15s;}
-  .nav-btn:hover { background: rgba(255,255,255,.08); }
-  .nav-btn.active { background: var(--bg-primary); font-weight: 600; }
-  .nav-btn.sub-item { padding: 8px 12px 8px 18px; border-left: 2px solid transparent; border-radius: 0 var(--radius-lg) var(--radius-lg) 0; opacity:0.8;}
-  .nav-btn.sub-item.active { background: rgba(37,99,235,0.2); border-left-color: var(--bg-primary); opacity:1;}
+/* =========================================
+   LAYOUT PRINCIPAL
+   ========================================= */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
 
-  /* Main Area */
-  .main { flex: 1; display: flex; flex-direction: column; padding: 20px; overflow: hidden; }
-  .view-wrap { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
-  .view-container { flex: 1; overflow-y: auto; padding-bottom: 50px; }
+.main {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
 
-  /* Elementos UI */
-  .card { background: var(--bg-panel); border: 1px solid var(--border-soft); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-panel); margin-bottom: 16px;}
-  .card-title { font-size: 16px; font-weight: 800; margin: 0 0 6px 0; color:var(--text-main);}
-  .card-subtitle { color: var(--text-soft); font-size: 12px; margin-bottom: 16px; }
-  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;}
+.view-wrap { 
+  padding: 32px; 
+  max-width: 1400px; 
+  margin: 0 auto; 
+}
 
-  /* Formularios */
-  label { font-size:11px; font-weight:700; color:var(--text-soft); margin-bottom:4px; display:block; text-transform:uppercase;}
-  input, select { width: 100%; border: 1px solid var(--border-soft); border-radius: var(--radius-md); padding: 10px; font-size: 13px; font-family: inherit; transition:all 0.2s; background:#fff;}
-  input:focus, select:focus { outline: 0; border-color: #a5b4fc; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
-  input:disabled, select:disabled { background: #f8fafc; color: #94a3b8; border-color:#e2e8f0; cursor:not-allowed; }
+/* =========================================
+   BARRA LATERAL (SIDEBAR) & ESTADOS
+   ========================================= */
+.sidebar {
+  width: 250px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 12px;
+  transition: width 0.3s ease;
+  overflow-x: hidden;
+}
 
-  /* Botones y Badges */
-  .btn { border: 0; border-radius: var(--radius-md); padding: 10px 16px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all .15s;}
-  .btn.primary { background: var(--bg-primary); color: #fff; }
-  .btn.primary:hover { background: #1d4ed8; }
-  .btn.success { background: #10b981; color: #fff; }
-  .inline-tag { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #e0f2fe; color: #0284c7; font-size: 11px; font-weight: 800;}
-  
-  /* Toggle Switch para Modo Edición */
-  .switch-container { display:flex; align-items:center; gap:10px; background:#f1f5f9; padding:6px 12px; border-radius:999px;}
-  .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
-  .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-  input:checked + .slider { background-color: #10b981; }
-  input:checked + .slider:before { transform: translateX(14px); }
+/* Estado Contraído */
+.sidebar.collapsed { width: 70px; }
+.sidebar.collapsed .brand-text,
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .cloud-status { display: none; }
+.sidebar.collapsed .toggle-btn { margin: 0 auto; display: block; }
+.sidebar.collapsed .nav-btn { justify-content: center; padding: 12px 0; }
 
-  /* Sesiones Alucinadas */
-  .session-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; position:relative; overflow:hidden;}
-  .session-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:#e2e8f0; transition:background 0.3s;}
-  .session-card:hover::before { background:#3b82f6; }
-  .feat-icon { display:inline-flex; align-items:center; gap:4px; font-size:10px; color:#64748b; background:#f8fafc; padding:2px 6px; border-radius:4px; border:1px solid #f1f5f9;}
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 0 8px;
+}
 
-  .loader-overlay { position: absolute; inset: 0; background: rgba(255,255,255,.9); display: none; align-items: center; justify-content: center; z-index: 50; border-radius: var(--radius-xl);}
-  .loader-overlay.show { display: flex; }
+.brand-text {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-main);
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.nav-btn:hover { background: #f1f5f9; color: var(--primary); }
+.nav-btn.active { background: #eff6ff; color: var(--primary); font-weight: 700; }
+.nav-icon { font-size: 20px; }
+
+.cloud-status {
+  margin-top: auto;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* =========================================
+   PANTALLA DE CARGA (LOADER GLOBAL)
+   ========================================= */
+.loader-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.loader-card {
+  background: #fff;
+  padding: 24px 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.loader-icon { font-size: 32px; margin-bottom: 12px; }
+.loader-card h3 { margin: 0 0 8px 0; color: var(--text-main); font-size: 18px; }
+.loader-card p { margin: 0; font-size: 14px; color: var(--text-muted); }
 </style>

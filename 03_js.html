@@ -1,582 +1,88 @@
 <script>
-  // Constantes de Carpetas Drive
-  const DRIVE_INDIVIDUAL = '1n6vLQO8rFVBZgexa-94_cX2tLEMtl37s';
-  const DRIVE_GRUPAL = '1NRs7d7XWUdF2fwJGul0hL-G9i2Q2T_cJ';
+/**
+ * APP CORE - MANEJADOR DE ESTADO GLOBAL Y RUTAS
+ */
+const App = {
+  State: {
+    config: {},
+    ciclos: [],
+    curricula: [],
+    cursosActivos: [],
+    currentView: null
+  },
 
-  // ==========================================
-  // CORE APPLICATION MANAGER
-  // ==========================================
-  const App = {
-    State: {
-      general: { configRows: [], ciclos: [], cicloActual: '' },
-      curricula: [],
-      derived: { cursosActivos: [], cursosPorCiclo: {} },
-      ui: { currentView: 'general', currentCursoTab: null, sidebarCollapsed: false }
+  UI: {
+    toggleSidebar: function() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
     },
-
-    init() {
-      this.showLoader(true, 'Iniciando Sistema', 'Cargando RAM');
-      google.script.run.withSuccessHandler((res) => {
-        this.showLoader(false);
-        if (!res.ok) { alert('Error: ' + res.message); return; }
-        this.hydrateState(res.data || {});
-        this.go('general');
-      }).apiBoot();
+    showLoader: function(title, sub) {
+      document.getElementById('loaderTitle').innerText = title || 'Cargando...';
+      document.getElementById('loaderSub').innerText = sub || '';
+      document.getElementById('loaderOverlay').style.display = 'flex';
     },
+    hideLoader: function() {
+      document.getElementById('loaderOverlay').style.display = 'none';
+    }
+  },
 
-    hydrateState(data) {
-      this.State.general.configRows = data.config || [];
-      this.State.general.ciclos = (data.ciclos || []).slice().sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
-      this.State.general.cicloActual = this.getConfigValue('ciclo_actual') || '';
-      this.State.curricula = data.curricula || [];
-      this.rebuildDerived();
-    },
+  Router: {
+    go: function(viewName, params = null) {
+      // Resaltar botón principal
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`btn-nav-${viewName}`);
+      if(activeBtn) activeBtn.classList.add('active');
 
-    rebuildDerived() {
-      const byCiclo = {};
-      this.State.curricula.forEach(r => {
-        const key = r.ciclo || ''; 
-        if (!byCiclo[key]) byCiclo[key] = [];
-        byCiclo[key].push(r);
-      });
-      Object.keys(byCiclo).forEach(key => byCiclo[key].sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0)));
-      
-      const cicloActualId = this.State.general.cicloActual;
-      this.State.derived.cursosActivos = (byCiclo[cicloActualId] || []).filter(r => String(r.activo || '').toUpperCase() === 'SI');
-
-      if (this.State.ui.currentCursoTab && !this.State.derived.cursosActivos.find(x => x.id_curricula === this.State.ui.currentCursoTab)) {
-        this.State.ui.currentCursoTab = null;
+      // Extraer el template
+      const template = document.getElementById(`tpl-${viewName}`);
+      if (!template) {
+        console.error(`Error Arquitectónico: No existe el template tpl-${viewName}`);
+        return;
       }
-      this.renderSidebar(); 
-    },
 
-    renderSidebar() {
-      const box = document.getElementById('dynamic-sidebar-courses');
-      if(!box) return;
-      const cursos = this.State.derived.cursosActivos;
-      if(!cursos.length) { box.innerHTML = '<div style="color:#64748b; font-size:11px; padding:0 12px;">No hay cursos activos</div>'; return; }
-      box.innerHTML = cursos.map(c => `
-        <button class="nav-btn sub-item ${this.State.ui.currentCursoTab === c.id_curricula ? 'active' : ''}" onclick="App.go('curso', '${c.id_curricula}')">
-          <span style="font-size:14px;">📘</span> <span class="nav-text" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.nombre}">${c.nombre}</span>
-        </button>
-      `).join('');
-    },
+      // Inyectar vista
+      const container = document.getElementById('viewContainer');
+      container.innerHTML = ''; 
+      container.appendChild(template.content.cloneNode(true));
 
-    setConfigValue(clave, valor) {
-      const row = this.State.general.configRows.find(r => r.clave === clave);
-      if (row) row.valor = valor; else this.State.general.configRows.push({ clave, valor });
-      if (clave === 'ciclo_actual') this.State.general.cicloActual = valor;
-    },
-
-    getConfigValue(clave) {
-      const row = this.State.general.configRows.find(r => r.clave === clave);
-      return row ? row.valor : '';
-    },
-
-    go(view, param = null) {
-      this.State.ui.currentView = view;
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      
-      if (view === 'general') {
-        document.getElementById('btn-nav-general').classList.add('active');
-        document.getElementById('viewContainer').innerHTML = document.getElementById('tpl-general').innerHTML;
-        GeneralPage.init();
-      } else if (view === 'curso') {
-        this.State.ui.currentCursoTab = param;
-        document.getElementById('viewContainer').innerHTML = document.getElementById('tpl-cursos').innerHTML;
-        CursosPage.init();
-        
-        setTimeout(() => {
-          document.querySelectorAll('.sub-item').forEach(btn => btn.classList.remove('active'));
-          const activeBtn = document.querySelector(`button[onclick="App.go('curso', '${param}')"]`);
-          if(activeBtn) activeBtn.classList.add('active');
-        }, 50);
-      }
-    },
-
-    toggleSidebar() {
-      this.State.ui.sidebarCollapsed = !this.State.ui.sidebarCollapsed;
-      document.getElementById('sidebar').classList.toggle('collapsed', this.State.ui.sidebarCollapsed);
-    },
-
-    showLoader(show, title='Sincronizando', sub='Espere por favor...') {
-      const overlay = document.getElementById('loaderOverlay');
-      if (overlay) {
-          document.getElementById('loaderTitle').textContent = title;
-          document.getElementById('loaderSub').textContent = sub;
-          overlay.classList.toggle('show', !!show);
-      }
-    },
-
-    syncToCloud(silencioso = false) {
-      if(!silencioso) {
-          const status = document.getElementById('cloudStatus');
-          if(status) { status.innerHTML = '⏳ Guardando...'; status.style.background = '#fef3c7'; status.style.color = '#b45309'; }
-      }
-      google.script.run.withSuccessHandler((res) => {
-        if(!silencioso) {
-            const status = document.getElementById('cloudStatus');
-            if (res.ok) { if(status) { status.innerHTML = '☁️ Sincronizado'; status.style.background = 'rgba(0,0,0,0.2)'; status.style.color = '#fff'; } }
-            else { alert('Error Fatal: ' + res.message); if(status) { status.innerHTML = '❌ Error'; status.style.background = '#fee2e2'; status.style.color = '#991b1b'; } }
+      // Inicializar módulo
+      setTimeout(() => {
+        if (viewName === 'general' && typeof ModuleGeneral !== 'undefined') {
+          ModuleGeneral.init();
+        } else if (viewName === 'cursos' && typeof ModuleCursos !== 'undefined') {
+          ModuleCursos.init(params);
         }
-      }).apiGuardarGeneral({ config: this.State.general.configRows, ciclos: this.State.general.ciclos, curricula: this.State.curricula });
+      }, 0);
+
+      App.State.currentView = viewName;
     }
-  };
+  },
 
-  // ==========================================
-  // PÁGINA 1: CONFIGURACIÓN GENERAL
-  // ==========================================
-  const GeneralPage = {
-    selectedCycleMetaId: null,
-    init() {
-      this.renderCycleSelector(); this.renderCyclesTable(); this.renderCurriculaTable();
-      if (!this.selectedCycleMetaId && App.State.general.cicloActual) { this.editCycleMeta(App.State.general.cicloActual); } 
-      else if (!this.selectedCycleMetaId && App.State.general.ciclos.length > 0) { this.editCycleMeta(App.State.general.ciclos[0].id_ciclo); }
-    },
-    updateYear() { App.setConfigValue('anio_actual', document.getElementById('cfg_anio_actual').value || ''); App.syncToCloud(true); },
-    formatCycleName(c) { let meta = {}; try { meta = JSON.parse(c.meta_json || '{}'); } catch(e){} return `[${c.anio || '----'}${meta.periodo ? '-'+meta.periodo : ''}] ${c.nombre_ciclo || 'Sin Ciclo'}`; },
-    renderCycleSelector() {
-      const inputAnio = document.getElementById('cfg_anio_actual'); if(inputAnio && !inputAnio.value) inputAnio.value = App.getConfigValue('anio_actual') || '';
-      const sel = document.getElementById('cfg_ciclo_actual'); if(!sel) return;
-      sel.innerHTML = '<option value="">(Seleccione ciclo operativo)</option>' + App.State.general.ciclos.map(c => `<option value="${c.id_ciclo}" ${c.id_ciclo === App.State.general.cicloActual ? 'selected' : ''}>${this.formatCycleName(c)}</option>`).join('');
-    },
-    renderCyclesTable() {
-      const box = document.getElementById('cyclesTableBox'); const rows = App.State.general.ciclos;
-      if (!rows.length) { box.innerHTML = '<div class="empty-state">No hay grupos registrados.</div>'; return; }
-      box.innerHTML = `<table class="table" style="min-width: 100%;"><tbody>
-            ${rows.map(r => `<tr style="cursor:pointer; ${this.selectedCycleMetaId === r.id_ciclo ? 'background: #eef2ff; border-left:3px solid #4f46e5;' : 'border-left:3px solid transparent;'}" onclick="GeneralPage.editCycleMeta('${r.id_ciclo}')">
-                <td style="padding: 10px 8px;"><div style="font-weight:700; font-size:12px; color:var(--text-main);">${this.formatCycleName(r)}</div>${r.id_ciclo === App.State.general.cicloActual ? '<div style="font-size:9px; color:#10b981; font-weight:bold; margin-top:2px;">▶ OPERATIVO ACTUAL</div>' : ''}</td></tr>`).join('')}
-          </tbody></table>`;
-    },
-    editCycleMeta(id) {
-      this.selectedCycleMetaId = id; this.renderCyclesTable(); const c = App.State.general.ciclos.find(x => x.id_ciclo === id); if(!c) return;
-      let meta = {}; try { meta = JSON.parse(c.meta_json || '{}'); } catch(e){}
-      document.getElementById('cycleMetaPanel').innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><div class="card-title" style="color:#4338ca; margin:0;">⚙️ Editor de Ciclo</div></div>
-        <div class="grid-2 equal" style="gap:12px; margin-bottom:0;">
-           <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid var(--border-soft);">
-              <div style="font-size:10px; font-weight:800; color:var(--bg-primary); text-transform:uppercase; margin-bottom:8px;">1. Identidad Académica</div>
-              <div class="form-row">
-                 <div><label class="muted">Año</label><input type="number" id="core_anio" value="${c.anio || ''}"></div>
-                 <div><label class="muted">Periodo</label>
-                    <select id="meta_periodo"><option value="" disabled ${!meta.periodo ? 'selected' : ''}>Elegir...</option><option value="I" ${meta.periodo === 'I' ? 'selected' : ''}>Periodo I</option><option value="II" ${meta.periodo === 'II' ? 'selected' : ''}>Periodo II</option></select>
-                 </div>
-              </div>
-              <div style="margin-top:8px;"><label class="muted">Nivel / Ciclo</label><input type="text" id="core_nombre" value="${c.nombre_ciclo || ''}"></div>
-           </div>
-           <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid var(--border-soft);">
-              <div style="font-size:10px; font-weight:800; color:#047857; text-transform:uppercase; margin-bottom:8px;">2. Ejecución</div>
-              <div class="form-row">
-                 <div><label class="muted">F. Inicio (Importante)</label><input type="date" id="meta_inicio" value="${meta.inicio || ''}" title="Define las fechas de sesiones"></div>
-                 <div><label class="muted">Estado</label><select id="meta_estado"><option value="Programado" ${meta.estado === 'Programado' ? 'selected' : ''}>Programado</option><option value="En Curso" ${meta.estado === 'En Curso' ? 'selected' : ''}>En Curso</option></select></div>
-              </div>
-           </div>
-        </div>
-        <div style="text-align:right; margin-top:12px;"><button class="btn dark" onclick="GeneralPage.saveCycleMeta('${c.id_ciclo}')">⚡ Aplicar y Guardar</button></div>
-      `;
-    },
-    saveCycleMeta(id) {
-       const c = App.State.general.ciclos.find(x => x.id_ciclo === id); if(!c) return;
-       c.anio = document.getElementById('core_anio').value; c.nombre_ciclo = document.getElementById('core_nombre').value;
-       const meta = { periodo: document.getElementById('meta_periodo').value, inicio: document.getElementById('meta_inicio').value, estado: document.getElementById('meta_estado').value };
-       c.meta_json = JSON.stringify(meta);
-       this.renderCycleSelector(); this.renderCurriculaTable(); this.editCycleMeta(id); App.syncToCloud(); 
-    },
-    renderCurriculaTable() {
-      const box = document.getElementById('curriculaTableBox'); const rows = App.State.curricula.filter(r => r.ciclo === this.selectedCycleMetaId);
-      if (!rows.length) { box.innerHTML = '<div class="empty-state" style="margin:20px;">No hay cursos asignados a este nivel.</div>'; return; }
-      const cycleOptions = App.State.general.ciclos.map(c => `<option value="${c.id_ciclo}">${this.formatCycleName(c)}</option>`).join('');
-      box.innerHTML = `<table class="table"><thead style="position: sticky; top: 0; background: #f8fafc;">
-            <tr><th>Grupo Fuerte</th><th>Activo</th><th>Código</th><th>Nombre</th></tr></thead><tbody>
-            ${rows.map(r => `<tr>
-                <td style="width:140px;"><select onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','ciclo',this.value)">${cycleOptions.replace(`value="${r.ciclo}"`, `value="${r.ciclo}" selected`)}</select></td>
-                <td style="width:80px;"><select onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','activo',this.value)"><option value="SI" ${r.activo === 'SI' ? 'selected' : ''}>SI</option><option value="NO" ${r.activo === 'NO' ? 'selected' : ''}>NO</option></select></td>
-                <td style="width:90px;"><input value="${r.codigo || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','codigo',this.value)"></td>
-                <td><input value="${r.nombre || ''}" onchange="GeneralPage.updateCurriculaField('${r.id_curricula}','nombre',this.value)"></td>
-              </tr>`).join('')}
-          </tbody></table>`;
-    },
-    updateCurriculaField(id, field, value) {
-      const row = App.State.curricula.find(r => r.id_curricula === id); if (row) row[field] = value;
-      App.rebuildDerived(); this.renderCurriculaTable(); App.syncToCloud(true);
-    },
-    updateCurrentSelector() { App.setConfigValue('ciclo_actual', document.getElementById('cfg_ciclo_actual').value); App.rebuildDerived(); this.init(); App.syncToCloud(true); }
-  };
+  Init: function() {
+    App.UI.showLoader('Sincronizando', 'Extrayendo Núcleo Operativo...');
 
-  // ==========================================
-  // PÁGINA 2: DASHBOARD DEL CURSO Y SESIONES
-  // ==========================================
-  const CursosPage = {
-    isEditing: false,     // Edición Global del Curso
-    isDayEditing: false,  // Edición Específica del Día
-    activeDayNum: null,   
-    activeDayDate: null,
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.success) {
+          App.State.config = response.data.config;
+          App.State.ciclos = response.data.ciclos;
+          App.State.curricula = response.data.curricula;
+          App.State.cursosActivos = response.data.cursosActivos;
 
-    init() { 
-      this.activeDayNum = null; 
-      this.isEditing = false;
-      this.isDayEditing = false;
-      this.render(); 
-    },
-    
-    toggleEdit() { this.isEditing = !this.isEditing; this.render(); },
-    toggleDayEdit() { this.isDayEditing = !this.isDayEditing; this.render(); },
+          App.UI.hideLoader();
+          App.Router.go('general');
+        } else {
+          App.UI.showLoader('Error', 'No se pudo leer la base de datos.');
+          console.error(response.message);
+        }
+      })
+      .withFailureHandler(function(error) {
+        App.UI.showLoader('Error Crítico', 'Falla en la conexión de servidor.');
+        console.error(error);
+      })
+      .getNucleoData();
+  }
+};
 
-    // GUARDADO DEL NIVEL CURSO GLOBAL
-    saveGlobalSettings() {
-      const r = App.State.curricula.find(x => x.id_curricula === App.State.ui.currentCursoTab);
-      if(!r) return;
-
-      r.horario = document.getElementById('form_dia').value;
-      r.link = document.getElementById('form_zoom').value;
-
-      let meta = {}; try { meta = JSON.parse(r.meta_json || '{}'); } catch(e){}
-      meta.fecha_inicio = document.getElementById('form_fecha').value;
-      meta.hora = document.getElementById('form_hora').value;
-      meta.drive = document.getElementById('form_drive').value;
-      meta.curso_ia_link = document.getElementById('form_ia_global').value;
-      r.meta_json = JSON.stringify(meta);
-
-      this.isEditing = false;
-      App.rebuildDerived(); 
-      this.render();
-      App.syncToCloud(false); // Falso para que salga la alerta visual "Guardando"
-    },
-
-    calcularFechas(fechaInicioStr) {
-      if(!fechaInicioStr) return [];
-      let parts = fechaInicioStr.split('-');
-      let d = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-      let fechas = [];
-      for(let i=0; i<16; i++) {
-        fechas.push(d.toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'}));
-        d.setDate(d.getDate() + 7); 
-      }
-      return fechas;
-    },
-
-    render() {
-      const panel = document.getElementById('courseMasterPanel');
-      if(!panel) return;
-      const r = App.State.derived.cursosActivos.find(x => x.id_curricula === App.State.ui.currentCursoTab);
-      if (!r) { panel.innerHTML = '<div class="empty-state">Selecciona un curso en el menú izquierdo.</div>'; return; }
-
-      // ENRUTADOR INTERNO
-      if (this.activeDayNum) {
-         this.renderDayDetail(panel, r);
-      } else {
-         this.renderCourseDashboard(panel, r);
-      }
-    },
-
-    // ----------------------------------------------------
-    // VISTA 1: DASHBOARD (RESUMEN GLOBAL)
-    // ----------------------------------------------------
-    renderCourseDashboard(panel, r) {
-      let meta = {}; try { meta = JSON.parse(r.meta_json || '{}'); } catch(e){}
-      const detalles = meta.sesiones_detalle || {};
-      const zoom = r.link || ''; const drive = meta.drive || ''; const ia_global = meta.curso_ia_link || '';
-      const dia = r.horario || ''; const hora = meta.hora || ''; const fechaBase = meta.fecha_inicio || '';
-
-      let html = `
-        <div class="card" style="display:flex; justify-content:space-between; align-items:flex-start; border-left:4px solid var(--bg-primary); padding:20px;">
-           <div>
-              <div class="card-title" style="font-size:24px; color:var(--text-main); margin-bottom:4px;">${r.nombre}</div>
-              <div style="display:flex; gap:10px; align-items:center;">
-                 <span class="inline-tag" style="font-size:12px;">Código: ${r.codigo}</span>
-                 <span style="font-size:13px; color:var(--text-soft); font-weight:600;">Día: ${dia || 'Sin asignar'} | Hora: ${hora || 'Sin asignar'}</span>
-              </div>
-           </div>
-           <div class="switch-container">
-              <span style="font-size:12px; font-weight:800; color:var(--text-main);">⚙️ MODO EDICIÓN</span>
-              <label class="switch"><input type="checkbox" ${this.isEditing ? 'checked' : ''} onchange="CursosPage.toggleEdit()"><span class="slider"></span></label>
-           </div>
-        </div>
-      `;
-
-      if(this.isEditing) {
-         html += `
-           <div class="card" style="background:#fff; border:1px solid #10b981;">
-             <div class="card-title" style="color:#047857;">Edición Global del Curso</div>
-             <div class="grid-2">
-                <div><label>Día de la Semana</label>
-                   <select id="form_dia">
-                     <option value="">Elegir...</option><option value="Lunes" ${dia==='Lunes'?'selected':''}>Lunes</option><option value="Martes" ${dia==='Martes'?'selected':''}>Martes</option><option value="Miércoles" ${dia==='Miércoles'?'selected':''}>Miércoles</option><option value="Jueves" ${dia==='Jueves'?'selected':''}>Jueves</option><option value="Viernes" ${dia==='Viernes'?'selected':''}>Viernes</option><option value="Sábado" ${dia==='Sábado'?'selected':''}>Sábado</option><option value="Domingo" ${dia==='Domingo'?'selected':''}>Domingo</option>
-                   </select>
-                </div>
-                <div><label>Día de Inicio Exacto (Clase 1)</label><input type="date" id="form_fecha" value="${fechaBase}"></div>
-                <div><label>Hora (Ej. 18:00 - 21:00)</label><input type="text" id="form_hora" value="${hora}"></div>
-                <div><label>🤖 Enlace IA Maestro del Curso</label><input type="text" id="form_ia_global" value="${ia_global}" placeholder="Ej. Link al GPT entrenado"></div>
-             </div>
-             <div class="grid-2" style="margin-top:12px;">
-                <div><label>📹 Enlace de Zoom/Meet</label><input type="text" id="form_zoom" value="${zoom}"></div>
-                <div><label>📁 Enlace Carpeta Drive General</label><input type="text" id="form_drive" value="${drive}"></div>
-             </div>
-             <div style="text-align:right; margin-top:16px;">
-                <button class="btn success" onclick="CursosPage.saveGlobalSettings()">💾 Guardar Ajustes del Curso</button>
-             </div>
-           </div>
-         `;
-      } else {
-         html += `
-           <div style="display:flex; gap:12px; margin-bottom:20px;">
-              ${zoom ? `<a href="${zoom}" target="_blank" class="btn primary" style="text-decoration:none; display:flex; align-items:center; gap:6px;">📹 Entrar a Clase Virtual</a>` : ''}
-              ${drive ? `<a href="${drive}" target="_blank" class="btn" style="background:#fff; border:1px solid #cbd5e1; text-decoration:none; color:#334155; display:flex; align-items:center; gap:6px;">📁 Drive del Curso</a>` : ''}
-              ${ia_global ? `<a href="${ia_global}" target="_blank" class="btn" style="background:#4f46e5; border:none; text-decoration:none; color:#fff; display:flex; align-items:center; gap:6px;">🤖 IA del Curso</a>` : ''}
-           </div>
-         `;
-      }
-
-      const fechas = this.calcularFechas(fechaBase);
-      html += `<div class="card-title" style="margin-bottom:16px; font-size:16px; border-bottom:2px solid var(--border-soft); padding-bottom:8px;">🗓️ Matriz de Sesiones Diarias</div>`;
-      
-      if(!fechaBase) {
-          html += `<div class="empty-state" style="background:#fff;">⚠️ Activa el Modo Edición y configura el "Día de Inicio Exacto" para generar las sesiones.</div>`;
-      } else {
-          html += `<div style="display:flex; flex-direction:column; gap:8px;">`;
-          for(let i=1; i<=16; i++) {
-              const s = detalles[i] || {};
-              const numPracticas = (s.practicas || []).length;
-              
-              html += `
-                <div style="background:#fff; border:1px solid var(--border-soft); border-radius:8px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:background 0.2s;"
-                     onclick="CursosPage.openDay(${i}, '${fechas[i-1]}')" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-                   <div style="display:flex; align-items:center; gap:20px;">
-                      <div style="background:var(--bg-app); color:var(--bg-primary); font-weight:900; font-size:16px; padding:8px 12px; border-radius:6px; min-width:60px; text-align:center;">DÍA ${i}</div>
-                      <div>
-                         <div style="font-size:14px; font-weight:800; color:var(--text-main); margin-bottom:4px;">${fechas[i-1]}</div>
-                         <div style="display:flex; gap:12px; font-size:11px; color:#64748b;">
-                            ${s.chat_ia ? '<span style="color:#4f46e5; font-weight:bold;">🤖 IA Lista</span>' : '<span>🤖 Sin IA</span>'}
-                            ${s.ppt ? '<span style="color:#047857; font-weight:bold;">📊 PPT Listo</span>' : '<span>📊 Sin PPT</span>'}
-                            <span style="color:${numPracticas>0?'#2563eb':''}">${numPracticas} Prácticas</span>
-                         </div>
-                      </div>
-                   </div>
-                   <div style="color:var(--bg-primary); font-size:20px; font-weight:bold;">➔</div>
-                </div>
-              `;
-          }
-          html += `</div>`;
-      }
-      panel.innerHTML = html;
-    },
-
-    // ----------------------------------------------------
-    // VISTA 2: CONFIGURACIÓN DETALLADA DEL DÍA (Con Modo Edición)
-    // ----------------------------------------------------
-    openDay(numSesion, fechaAprox) {
-        this.activeDayNum = numSesion;
-        this.activeDayDate = fechaAprox;
-        this.isDayEditing = false; // Siempre entra en modo lectura
-        this.render();
-    },
-
-    closeDay() {
-        this.activeDayNum = null;
-        this.activeDayDate = null;
-        this.isDayEditing = false;
-        this.render();
-    },
-
-    // Función de seguridad: Atrapa lo que escribiste antes de generar un Drive
-    syncDayFormToRAM(id_curricula, numSesion) {
-        if(!this.isDayEditing) return; // Solo atrapa si está editando
-        const r = App.State.curricula.find(x => x.id_curricula === id_curricula);
-        let meta = {}; try { meta = JSON.parse(r.meta_json || '{}'); } catch(e){}
-        if(!meta.sesiones_detalle) meta.sesiones_detalle = {};
-        if(!meta.sesiones_detalle[numSesion]) meta.sesiones_detalle[numSesion] = {};
-
-        const elIa = document.getElementById('day_form_ia'); if(elIa) meta.sesiones_detalle[numSesion].chat_ia = elIa.value;
-        const elBor = document.getElementById('day_form_borrador'); if(elBor) meta.sesiones_detalle[numSesion].borrador = elBor.value;
-        const elPpt = document.getElementById('day_form_ppt'); if(elPpt) meta.sesiones_detalle[numSesion].ppt = elPpt.value;
-
-        r.meta_json = JSON.stringify(meta);
-    },
-
-    saveDaySettings(id_curricula, numSesion) {
-        this.syncDayFormToRAM(id_curricula, numSesion);
-        this.isDayEditing = false;
-        App.syncToCloud(false); // Envía a Google Sheets con alerta visual
-        this.render();
-    },
-
-    renderDayDetail(panel, r) {
-      const numSesion = this.activeDayNum;
-      let meta = {}; try { meta = JSON.parse(r.meta_json || '{}'); } catch(e){}
-      const s = (meta.sesiones_detalle || {})[numSesion] || {};
-      
-      let html = `
-        <div style="margin-bottom:16px;">
-           <button class="btn" style="background:#e2e8f0; color:#334155; font-size:12px; display:flex; align-items:center; gap:6px;" onclick="CursosPage.closeDay()">
-             ⬅ Volver al Resumen del Curso
-           </button>
-        </div>
-
-        <div class="card" style="display:flex; justify-content:space-between; align-items:center; border-left:4px solid #047857;">
-           <div>
-             <div style="font-size:11px; font-weight:800; color:#047857; letter-spacing:1px; margin-bottom:4px;">SESIÓN INDIVIDUAL</div>
-             <div style="font-size:24px; font-weight:800; color:var(--text-main);">DÍA ${numSesion} <span style="color:#94a3b8; font-weight:400;">/ ${this.activeDayDate}</span></div>
-           </div>
-           <div class="switch-container">
-              <span style="font-size:12px; font-weight:800; color:var(--text-main);">⚙️ MODO EDICIÓN</span>
-              <label class="switch"><input type="checkbox" ${this.isDayEditing ? 'checked' : ''} onchange="CursosPage.toggleDayEdit()"><span class="slider"></span></label>
-           </div>
-        </div>
-      `;
-
-      if (this.isDayEditing) {
-         html += `
-           <div class="card" style="background:#fff; border:1px solid #10b981;">
-              <div class="card-title" style="color:#047857;">Enlaces Manuales del Día</div>
-              <div class="form-row" style="margin-bottom:12px;">
-                 <div style="grid-column: span 2;">
-                    <label>🤖 Link del Chat IA (Específico para esta clase)</label>
-                    <input type="text" id="day_form_ia" value="${s.chat_ia || ''}" placeholder="https://chat.openai.com/...">
-                 </div>
-                 <div>
-                    <label>📝 Link del Borrador (Docs)</label>
-                    <input type="text" id="day_form_borrador" value="${s.borrador || ''}">
-                 </div>
-                 <div>
-                    <label>📊 Link de Diapositivas (PPT)</label>
-                    <input type="text" id="day_form_ppt" value="${s.ppt || ''}">
-                 </div>
-              </div>
-              <div style="text-align:right;">
-                 <button class="btn success" onclick="CursosPage.saveDaySettings('${r.id_curricula}', ${numSesion})">💾 Guardar Ajustes en Sheets</button>
-              </div>
-           </div>
-
-           <div class="grid-2">
-              <div class="card" style="background:#f8fafc; border:1px solid #c7d2fe;">
-                 <div style="font-size:12px; font-weight:800; color:#4f46e5; margin-bottom:12px;">🚀 AUTO-GENERAR MATERIALES EN DRIVE</div>
-                 <div style="font-size:11px; color:var(--text-soft); margin-bottom:16px;">Crea archivos vacíos directamente en tu carpeta de Google Drive. Esto se auto-guarda.</div>
-                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button class="btn" style="background:#fff; border:1px dashed #4f46e5; color:#4f46e5; text-align:left;" onclick="CursosPage.crearRecursoDia('${r.id_curricula}', ${numSesion}, 'doc', 'Borrador')">+ Generar Borrador (Google Docs)</button>
-                    <button class="btn" style="background:#fff; border:1px dashed #d97706; color:#d97706; text-align:left;" onclick="CursosPage.crearRecursoDia('${r.id_curricula}', ${numSesion}, 'slide', 'Presentación')">+ Generar PPT (Google Slides)</button>
-                 </div>
-              </div>
-
-              <div class="card" style="background:#f8fafc; border:1px solid #047857;">
-                 <div style="font-size:12px; font-weight:800; color:#047857; margin-bottom:12px;">🎯 GENERAR NUEVA PRÁCTICA EN DRIVE</div>
-                 <div class="form-row" style="margin-bottom:8px;">
-                    <select id="prac_modalidad" onchange="document.getElementById('prac_grupos_box').style.display = this.value === 'grupal' ? 'block' : 'none'">
-                       <option value="individual">Individual (1 Archivo)</option>
-                       <option value="grupal">Grupal (Subcarpeta + N Archivos)</option>
-                    </select>
-                    <select id="prac_tipo">
-                       <option value="doc">Documento (Docs)</option>
-                       <option value="sheet">Hoja de Cálculo (Sheets)</option>
-                       <option value="slide">Presentación (Slides)</option>
-                    </select>
-                 </div>
-                 <div class="form-row" style="margin-bottom:12px;">
-                    <input type="text" id="prac_nombre" placeholder="Nombre (Ej. Caso Estudio)">
-                    <div id="prac_grupos_box" style="display:none; width:100%;"><input type="number" id="prac_numgrupos" value="4" placeholder="Grupos"></div>
-                 </div>
-                 <button class="btn success" style="width:100%;" onclick="CursosPage.crearPracticaDia('${r.id_curricula}', ${numSesion})">⚡ Generar Práctica</button>
-              </div>
-           </div>
-         `;
-      } else {
-         // MODO LECTURA DEL DÍA
-         html += `
-           <div class="grid-2">
-              <div class="card" style="background:#fff;">
-                 <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:16px;">Recursos de la Sesión</div>
-                 <div style="display:flex; flex-direction:column; gap:12px;">
-                    ${s.chat_ia ? `<a href="${s.chat_ia}" target="_blank" class="btn" style="background:#4f46e5; color:#fff; text-decoration:none;">🤖 Abrir Chat IA de la Clase</a>` : '<div class="empty-state" style="padding:10px;">Falta enlazar Chat IA</div>'}
-                    ${s.borrador ? `<a href="${s.borrador}" target="_blank" class="btn" style="background:#e0f2fe; color:#0369a1; text-decoration:none;">📝 Abrir Borrador de Clase</a>` : '<div class="empty-state" style="padding:10px;">Falta Borrador</div>'}
-                    ${s.ppt ? `<a href="${s.ppt}" target="_blank" class="btn" style="background:#fef08a; color:#854d0e; text-decoration:none;">📊 Abrir Presentación (PPT)</a>` : '<div class="empty-state" style="padding:10px;">Falta Presentación</div>'}
-                 </div>
-              </div>
-
-              <div class="card" style="background:#fff;">
-                 <div style="font-size:13px; font-weight:800; color:var(--text-main); margin-bottom:16px;">Prácticas y Asignaciones</div>
-                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    ${(s.practicas || []).map(p => `
-                       <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; padding:10px; border-radius:6px;">
-                          <div>
-                             <div style="font-weight:bold; font-size:12px;">${p.nombre}</div>
-                             <div style="font-size:10px; color:#64748b; text-transform:uppercase;">${p.modalidad} | ${p.tipo}</div>
-                          </div>
-                          <a href="${p.url}" target="_blank" class="btn" style="background:#fff; border:1px solid #cbd5e1; color:#0f172a; text-decoration:none; font-size:11px; padding:6px 12px;">Abrir</a>
-                       </div>
-                    `).join('') || '<div class="empty-state">No hay prácticas generadas para este día.</div>'}
-                 </div>
-              </div>
-           </div>
-         `;
-      }
-      panel.innerHTML = html;
-    },
-
-    // ----------------------------------------------------
-    // CONEXIÓN CON DRIVE (Protegida)
-    // ----------------------------------------------------
-    crearRecursoDia(id_curricula, numSesion, tipo, prefijo) {
-       this.syncDayFormToRAM(id_curricula, numSesion); // Salvavidas: guarda los textos antes de generar
-
-       const r = App.State.curricula.find(x => x.id_curricula === id_curricula);
-       const nombreDoc = `[${r.codigo}] Día ${numSesion} - ${prefijo}`;
-       
-       App.showLoader(true, 'Creando en Drive', 'Generando archivo en la nube...');
-       google.script.run.withSuccessHandler((res) => {
-          App.showLoader(false);
-          if(res.ok) {
-             let meta = {}; try { meta = JSON.parse(r.meta_json || '{}'); } catch(e){}
-             if(!meta.sesiones_detalle) meta.sesiones_detalle = {};
-             if(!meta.sesiones_detalle[numSesion]) meta.sesiones_detalle[numSesion] = {};
-             
-             if(tipo === 'doc') meta.sesiones_detalle[numSesion].borrador = res.url;
-             if(tipo === 'slide') meta.sesiones_detalle[numSesion].ppt = res.url;
-             
-             r.meta_json = JSON.stringify(meta);
-             App.syncToCloud(true);
-             this.render(); 
-          } else alert('Error: ' + res.message);
-       }).apiGenerarRecursosAvanzados({
-           folderId_individual: DRIVE_INDIVIDUAL, folderId_grupal: DRIVE_GRUPAL,
-           tipo_archivo: tipo, nombre_archivo: nombreDoc, es_grupal: false
-       });
-    },
-
-    crearPracticaDia(id_curricula, numSesion) {
-       this.syncDayFormToRAM(id_curricula, numSesion); // Salvavidas
-
-       const nombre = document.getElementById('prac_nombre').value;
-       if(!nombre) { alert("Escribe un nombre para la práctica"); return; }
-       
-       const modalidad = document.getElementById('prac_modalidad').value;
-       const tipo = document.getElementById('prac_tipo').value;
-       const numGrupos = parseInt(document.getElementById('prac_numgrupos').value || "4");
-       
-       const r = App.State.curricula.find(x => x.id_curricula === id_curricula);
-       const nombreDoc = `[${r.codigo}] Día ${numSesion} - ${nombre}`;
-
-       App.showLoader(true, 'Procesando Práctica', modalidad === 'grupal' ? `Generando subcarpeta y ${numGrupos} archivos...` : 'Generando archivo individual...');
-       
-       google.script.run.withSuccessHandler((res) => {
-          App.showLoader(false);
-          if(res.ok) {
-             let meta = {}; try { meta = JSON.parse(r.meta_json || '{}'); } catch(e){}
-             if(!meta.sesiones_detalle) meta.sesiones_detalle = {};
-             if(!meta.sesiones_detalle[numSesion]) meta.sesiones_detalle[numSesion] = {};
-             if(!meta.sesiones_detalle[numSesion].practicas) meta.sesiones_detalle[numSesion].practicas = [];
-             
-             const finalUrl = res.tipo === 'grupal' ? res.folderUrl : res.url;
-             meta.sesiones_detalle[numSesion].practicas.push({ nombre: nombre, modalidad: modalidad, tipo: tipo, url: finalUrl });
-             
-             r.meta_json = JSON.stringify(meta);
-             App.syncToCloud(true);
-             this.render(); 
-          } else alert('Error: ' + res.message);
-       }).apiGenerarRecursosAvanzados({
-           folderId_individual: DRIVE_INDIVIDUAL, folderId_grupal: DRIVE_GRUPAL,
-           tipo_archivo: tipo, nombre_archivo: nombreDoc, es_grupal: (modalidad === 'grupal'), num_grupos: numGrupos
-       });
-    }
-  };
-
-  window.addEventListener('load', () => App.init());
+// Arrancar el sistema cuando el DOM global esté listo
+document.addEventListener('DOMContentLoaded', App.Init);
 </script>
