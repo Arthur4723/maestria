@@ -8,6 +8,7 @@ const App = {
     ciclos: [],
     curricula: [],
     cursosActivos: [],
+    sesiones: [], // <-- NUEVO: Inicializamos las sesiones en la RAM
     currentView: null
   },
 
@@ -62,14 +63,15 @@ const App = {
 
     google.script.run
       .withSuccessHandler(function(response) {
-        if(response.success) {
-          App.State.config = response.data.config;
-          App.State.ciclos = response.data.ciclos;
-          App.State.curricula = response.data.curricula;
-          App.State.cursosActivos = response.data.cursosActivos;
+        if(response.success || response.status === "success") {
+          App.State.config = response.data.config || {};
+          App.State.ciclos = response.data.ciclos || [];
+          App.State.curricula = response.data.curricula || [];
+          App.State.cursosActivos = response.data.cursosActivos || [];
+          App.State.sesiones = response.data.sesiones || [];
 
           App.UI.hideLoader();
-          App.Router.go('general');
+          App.Router.go('cursos');
         } else {
           App.UI.showLoader('Error', 'No se pudo leer la base de datos.');
           console.error(response.message);
@@ -79,7 +81,7 @@ const App = {
         App.UI.showLoader('Error Crítico', 'Falla en la conexión de servidor.');
         console.error(error);
       })
-      .getNucleoData();
+      .getCoreDataSPA(); // <--- NUEVA FUNCIÓN INMUNE
   }
 };
 

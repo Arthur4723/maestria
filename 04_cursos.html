@@ -23,8 +23,7 @@
           </div>
           <h2 id="curso-nombre-view" style="margin: 0; color: #0f172a; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Nombre del Curso</h2>
           
-          <div id="curso-action-links" style="display: flex; gap: 8px; margin-top: 12px;">
-            </div>
+          <div id="curso-action-links" style="display: flex; gap: 8px; margin-top: 12px; transition: all 0.3s ease;"></div>
         </div>
         
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 16px;">
@@ -40,7 +39,7 @@
 
           <div style="display: flex; gap: 4px; background: #e2e8f0; padding: 4px; border-radius: 8px;">
             <button id="subtab-inicio" onclick="ModuleCursos.switchSubTab('inicio')" class="subtab-btn active">🏠 Dashboard Global</button>
-            <button id="subtab-sesiones" onclick="ModuleCursos.switchSubTab('sesiones')" class="subtab-btn">📅 16 Sesiones</button>
+            <button id="subtab-sesiones" onclick="ModuleCursos.switchSubTab('sesiones')" class="subtab-btn">📅 Actividades y Sesiones</button>
           </div>
 
         </div>
@@ -49,15 +48,15 @@
       <div style="flex: 1; overflow-y: auto; position: relative;">
         
         <div id="view-inicio" style="padding: 24px; display: block;">
-          
           <div class="edit-only" style="margin-bottom: 24px; background: #fffbeb; padding: 16px; border: 1px solid #fde68a; border-radius: 8px;">
             <h4 style="margin: 0 0 12px 0; color: #92400e; font-size: 14px;">Configuración Logística del Curso</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+              <div><label class="form-label">Día(s) de clase</label><input type="text" id="inicio-dias" class="form-input" placeholder="Ej: Lunes"></div>
+              <div><label class="form-label">Horario</label><input type="text" id="inicio-hora" class="form-input" placeholder="Ej: 19:00 - 22:00"></div>
               <div><label class="form-label">Fecha Inicio</label><input type="date" id="inicio-fecha" class="form-input"></div>
-              <div><label class="form-label">Horario</label><input type="text" id="inicio-hora" class="form-input"></div>
-              <div><label class="form-label">Enlace Clase (Zoom/Meet)</label><input type="url" id="inicio-zoom" class="form-input"></div>
-              <div><label class="form-label">Carpeta Drive</label><input type="url" id="inicio-drive" class="form-input"></div>
-              <div style="grid-column: span 2;"><label class="form-label">Enlace Asistente IA Global (ChatGPT)</label><input type="url" id="inicio-ia" class="form-input"></div>
+              <div><label class="form-label">Enlace Clase (Zoom/Meet)</label><input type="url" id="inicio-zoom" class="form-input" placeholder="https://..."></div>
+              <div><label class="form-label">Carpeta Drive</label><input type="url" id="inicio-drive" class="form-input" placeholder="https://..."></div>
+              <div><label class="form-label">Asistente IA (Global)</label><input type="url" id="inicio-ia" class="form-input" placeholder="URL ChatGPT..."></div>
             </div>
           </div>
 
@@ -82,43 +81,14 @@
 
             <div class="op-card" style="display: flex; flex-direction: column;">
               <h4 style="margin: 0 0 12px 0; color: #1e293b; display: flex; align-items: center; gap: 6px;">📝 Notas Generales del Curso</h4>
-              <div id="inicio-notas-read" class="read-only" style="white-space: pre-wrap; font-size: 13px; color: #475569; flex: 1;"></div>
+              <div id="inicio-notas-read" class="read-only" style="white-space: pre-wrap; font-size: 13px; color: #475569; flex: 1; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;"></div>
               <textarea id="inicio-notas-edit" class="edit-only form-input" style="flex: 1; min-height: 300px; resize: none;"></textarea>
             </div>
           </div>
         </div>
 
         <div id="view-sesiones" style="display: none; height: 100%;">
-          <div style="display: flex; height: 100%;">
-            
-            <div style="width: 220px; border-right: 1px solid #e2e8f0; background: #f8fafc; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 4px;" id="sesiones-sidebar-list">
-              </div>
-
-            <div style="flex: 1; padding: 24px; overflow-y: auto;">
-              
-              <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0;">
-                <h3 id="day-title" style="margin: 0 0 8px 0; color: #0f172a; font-size: 20px;">Día X: Tema</h3>
-                
-                <div class="read-only" id="day-date-read" style="color: #64748b; font-size: 13px;">Fecha: -</div>
-                <div class="edit-only" style="display: flex; gap: 12px; align-items: center; margin-top: 8px;">
-                  <input type="text" id="day-tema-edit" class="form-input" placeholder="Tema de la sesión (Opcional)" style="flex: 1; margin: 0;">
-                  <input type="date" id="day-date-edit" class="form-input" style="width: 150px; margin: 0;" title="Fecha de la sesión">
-                </div>
-              </div>
-
-              <div class="op-card">
-                <div class="card-header">
-                  <h4 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 6px;">📂 Elementos de la Sesión</h4>
-                  <button class="btn-add edit-only" onclick="ModuleCursos.addDayResource()">+ Añadir Elemento</button>
-                </div>
-                
-                <div id="day-resources-read" class="read-only" style="display: flex; flex-direction: column; gap: 12px;"></div>
-                <div id="day-resources-edit" class="edit-only" style="display: flex; flex-direction: column; gap: 12px;"></div>
-              </div>
-
-            </div>
-          </div>
-        </div>
+           </div>
 
       </div>
     </div>
@@ -135,7 +105,6 @@
 .subtab-btn:hover { background: #cbd5e1; }
 .subtab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-/* Switch Style */
 .switch { position: relative; display: inline-block; width: 36px; height: 18px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 18px; }
@@ -147,18 +116,26 @@ input:checked + .slider:before { transform: translateX(18px); }
 .op-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
 
-.btn-add { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
+.btn-add { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; justify-content: center;}
+.btn-add:hover { filter: brightness(0.95); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+
 .form-label { display: block; font-size: 11px; font-weight: bold; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-.form-input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box; }
-.form-input:focus { border-color: #3b82f6; outline: none; }
+.form-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box; transition: border-color 0.2s;}
+.form-input:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
-.day-btn { padding: 10px; background: transparent; border: 1px solid transparent; border-radius: 6px; text-align: left; cursor: pointer; font-size: 13px; color: #475569; transition: all 0.2s; font-weight: 500;}
+/* Menú Acordeón y Días - Diseño de Sistema */
+.group-header { padding: 8px 12px; background: #f1f5f9; border-left: 3px solid #94a3b8; border-radius: 0 6px 6px 0; font-size: 12px; font-weight: 800; color: #334155; display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;}
+.group-header:hover { background: #e2e8f0; border-left-color: #64748b; }
+.day-btn { padding: 10px 12px; background: transparent; border: 1px solid transparent; border-radius: 6px; text-align: left; cursor: pointer; font-size: 13px; color: #475569; transition: all 0.2s; font-weight: 500; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; margin-bottom: 2px;}
 .day-btn:hover { background: #e2e8f0; }
-.day-btn.active { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; font-weight: 700; }
+.day-btn.active { background: #eff6ff; border-color: #bfdbfe; color: #2563eb; font-weight: 700; box-shadow: inset 3px 0 0 #2563eb;}
 
-.resource-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #334155; text-decoration: none; transition: transform 0.2s;}
-.resource-chip:hover { transform: translateY(-1px); border-color: #cbd5e1; }
-.resource-row { display: flex; gap: 8px; align-items: center; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1; }
+/* Mejoras visuales en Recursos */
+.resource-chip { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; color: #1e293b; text-decoration: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+.resource-chip:hover { transform: translateY(-2px); border-color: #94a3b8; box-shadow: 0 4px 6px rgba(0,0,0,0.08); }
+.resource-chip span { font-size: 18px; }
+
+.resource-row { display: flex; gap: 8px; align-items: center; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
 
 .edit-mode-active .read-only { display: none !important; }
 .edit-mode-active .edit-only { display: flex !important; }
@@ -169,331 +146,526 @@ input:checked + .slider:before { transform: translateX(18px); }
 const ModuleCursos = {
   currentCursoId: null,
   currentSubView: 'inicio',
-  currentDayNum: 1,
+  activeSessionId: null,
   isEditing: false,
+  sidebarOpen: true, 
+  expandedGroups: { 'Día': true, 'Tarea': true, 'Práctica': true, 'Exposición': true, 'Otros': true }, 
+  
   draftMeta: {}, 
+  draftSession: null,
+  draftSessionResources: [],
+  draftSessionIA: '', 
 
   init: function(cursoIdParam = null) {
-    const cursosActivos = App.State.cursosActivos;
-    if (!cursosActivos || cursosActivos.length === 0) {
-      document.getElementById('cursos-empty-state').style.display = 'block';
-      document.getElementById('cursos-workspace').style.display = 'none';
+    const cicloActual = App.State.config.ciclo_actual;
+    const cursosActivos = (App.State.curricula || []).filter(c => c.ciclo === cicloActual);
+    
+    const workspace = document.getElementById('cursos-workspace');
+    const emptyState = document.getElementById('cursos-empty-state');
+    
+    if (!workspace || !emptyState) return;
+
+    if (cursosActivos.length === 0) {
+      workspace.style.display = 'none';
+      emptyState.style.display = 'block';
       return;
     }
-    document.getElementById('cursos-empty-state').style.display = 'none';
-    document.getElementById('cursos-workspace').style.display = 'flex';
+
+    workspace.style.display = 'flex';
+    emptyState.style.display = 'none';
     
-    this.currentCursoId = cursoIdParam && cursosActivos.find(c => c.id_curricula === cursoIdParam) ? cursoIdParam : cursosActivos[0].id_curricula;
+    this.currentCursoId = cursoIdParam || cursosActivos[0].id_curricula;
+    this.sidebarOpen = true; 
     
-    // Aquí el orden es vital: Primero dibujamos las pestañas, luego CARGAMOS LOS DATOS (eso resetea la UI a lectura)
-    this.renderTabs();
+    this.renderTabs(cursosActivos);
     this.loadCourseData();
   },
 
   switchTab: function(cursoId) {
-    if(this.isEditing) {
-      if(!confirm("Tienes cambios sin guardar. ¿Seguro que deseas cambiar de curso?")) return;
+    if (this.isEditing) {
+      if (!confirm("Tienes cambios sin guardar. ¿Deseas descartarlos y cambiar de curso?")) return;
     }
     this.currentCursoId = cursoId;
-    this.currentSubView = 'inicio';
-    this.currentDayNum = 1;
-    this.renderTabs();
-    this.loadCourseData(); // Recarga y apaga la edición de forma segura
+    this.isEditing = false;
+    this.draftSession = null;
+    this.sidebarOpen = true;
+    
+    this.loadCourseData(); 
+    this.toggleEditMode(false); 
+
+    const cicloActual = App.State.config.ciclo_actual;
+    this.renderTabs((App.State.curricula || []).filter(c => c.ciclo === cicloActual));
   },
 
   switchSubTab: function(viewName) {
-    if(this.isEditing) {
-      if(!confirm("Modo edición activo. Guarda los cambios antes de cambiar de vista.")) return;
+    if (this.isEditing) {
+      alert("Guarda los cambios antes de cambiar de sección.");
+      return;
     }
     this.currentSubView = viewName;
     document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`subtab-${viewName}`).classList.add('active');
+    const btn = document.getElementById(`subtab-${viewName}`);
+    if(btn) btn.classList.add('active');
     
     document.getElementById('view-inicio').style.display = viewName === 'inicio' ? 'block' : 'none';
     document.getElementById('view-sesiones').style.display = viewName === 'sesiones' ? 'block' : 'none';
+
+    // OCULTAR HEADER GLOBAL EN SESIONES
+    const actionLinks = document.getElementById('curso-action-links');
+    const horarioView = document.getElementById('curso-horario-view');
+    if(actionLinks) actionLinks.style.display = viewName === 'inicio' ? 'flex' : 'none';
+    if(horarioView) horarioView.style.display = viewName === 'inicio' ? 'inline-block' : 'none';
+
+    if (viewName === 'sesiones') this.renderSesionesSidebar();
+    else this.renderInicioView();
   },
 
-  renderTabs: function() {
-    const container = document.getElementById('cursos-tabs-container');
-    container.innerHTML = '';
-    const cursos = [...App.State.cursosActivos].sort((a, b) => a.orden - b.orden);
+  toggleSidebar: function() {
+    this.sidebarOpen = !this.sidebarOpen;
+    const sidebar = document.getElementById('sesiones-sidebar-container');
+    if (sidebar) {
+      sidebar.style.width = this.sidebarOpen ? '260px' : '0px';
+      sidebar.style.padding = this.sidebarOpen ? '12px' : '0px';
+      sidebar.style.borderRight = this.sidebarOpen ? '1px solid #e2e8f0' : 'none';
+    }
+    this.renderSessionDetail(); 
+  },
 
-    cursos.forEach(curso => {
+  toggleGroup: function(tipo) {
+    this.expandedGroups[tipo] = !this.expandedGroups[tipo];
+    this.renderSesionesSidebar();
+  },
+
+  renderTabs: function(cursos) {
+    const container = document.getElementById('cursos-tabs-container');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    cursos.sort((a, b) => (parseInt(a.orden) || 0) - (parseInt(b.orden) || 0)).forEach(curso => {
       const btn = document.createElement('button');
-      btn.onclick = () => this.switchTab(curso.id_curricula);
       btn.className = (curso.id_curricula === this.currentCursoId) ? 'tab-btn active' : 'tab-btn';
       btn.innerText = curso.nombre || curso.codigo;
+      btn.onclick = () => this.switchTab(curso.id_curricula);
       container.appendChild(btn);
     });
   },
 
-  parseJsonSafely: function(str) {
-    try { return (str && str.trim() !== '') ? JSON.parse(str) : {}; } 
-    catch(e) { console.warn("Error parseando JSON", e); return {}; }
-  },
-
   loadCourseData: function() {
-    const curso = App.State.cursosActivos.find(c => c.id_curricula === this.currentCursoId);
+    const curso = App.State.curricula.find(c => c.id_curricula === this.currentCursoId);
     if (!curso) return;
 
-    // 1. Datos de las columnas raíz
     document.getElementById('curso-codigo-view').innerText = curso.codigo || 'S/C';
-    document.getElementById('curso-creditos-view').innerText = curso.creditos ? `${curso.creditos} Créditos` : '-';
-    document.getElementById('curso-nombre-view').innerText = curso.nombre || 'Sin nombre';
+    document.getElementById('curso-creditos-view').innerText = (curso.creditos || '0') + ' Créditos';
+    document.getElementById('curso-nombre-view').innerText = curso.nombre || 'Sin Nombre';
     
-    // 2. Parsear el meta_json
-    let meta = this.parseJsonSafely(curso.meta_json);
-    
-    // 3. Centralizar todo en draftMeta (Ahora los días, link y horario viven aquí)
-    this.draftMeta = {
-      dias: meta.dias || '',
-      hora: meta.horario || meta.hora || '19:00 - 22:00',
-      link: meta.link || '', 
-      fecha_inicio: meta.fecha_inicio || '',
-      drive: meta.drive || '',
-      sesiones: meta.sesiones || 16,
-      curso_ia_link: meta.curso_ia_link || '',
-      notas_generales: meta.notas_generales || '',
-      tareas: meta.tareas || [],
-      materiales: meta.materiales || [],
-      sesiones_detalle: meta.sesiones_detalle || {}
-    };
+    let meta = {};
+    try { meta = (typeof curso.meta_json === 'string') ? JSON.parse(curso.meta_json) : (curso.meta_json || {}); } catch(e) {}
 
-    // Aseguramos 16 sesiones mínimas
-    for(let i=1; i<=this.draftMeta.sesiones; i++) {
-      if(!this.draftMeta.sesiones_detalle[i]) {
-        this.draftMeta.sesiones_detalle[i] = { tema: '', fecha: '' }; 
-      }
-    }
+    this.draftMeta = { ...meta };
+    if(!this.draftMeta.tareas) this.draftMeta.tareas = [];
+    if(!this.draftMeta.materiales) this.draftMeta.materiales = [];
 
-    document.getElementById('curso-horario-view').innerText = this.draftMeta.hora;
+    let hStr = [];
+    if(this.draftMeta.dias) hStr.push(this.draftMeta.dias);
+    if(this.draftMeta.horario) hStr.push(this.draftMeta.horario);
+    document.getElementById('curso-horario-view').innerText = hStr.length > 0 ? hStr.join(' - ') : 'Horario no definido';
 
-    // 4. Inyección de Botones Principales (Leo del draftMeta)
-    const linksContainer = document.getElementById('curso-action-links');
-    linksContainer.innerHTML = '';
-    
-    if (this.draftMeta.link && this.draftMeta.link.trim() !== '') {
-      linksContainer.innerHTML += `<a href="${this.draftMeta.link}" target="_blank" class="resource-chip" style="background:#2563eb; color:#fff; border:none; font-weight:bold;"><span>📹</span> Clase en Vivo</a>`;
-    }
-    if (this.draftMeta.curso_ia_link && this.draftMeta.curso_ia_link.trim() !== '') {
-      linksContainer.innerHTML += `<a href="${this.draftMeta.curso_ia_link}" target="_blank" class="resource-chip" style="background:#8b5cf6; color:#fff; border:none; font-weight:bold;"><span>🤖</span> Asistente IA</a>`;
-    }
-    if (this.draftMeta.drive && this.draftMeta.drive.trim() !== '') {
-      linksContainer.innerHTML += `<a href="${this.draftMeta.drive}" target="_blank" class="resource-chip" style="background:#10b981; color:#fff; border:none; font-weight:bold;"><span>📁</span> Carpeta Drive</a>`;
-    }
-
-    // 5. Forzar estado de Solo Lectura al cargar datos nuevos
-    this.toggleEditMode(false);
+    const container = document.getElementById('curso-action-links');
+    container.innerHTML = '';
+    if(this.draftMeta.link) container.innerHTML += `<a href="${this.draftMeta.link}" target="_blank" class="resource-chip" style="background:#2563eb; color:#fff; border:none; font-weight:bold; padding:8px 12px;"><span>📹</span> Clase Virtual</a>`;
+    if(this.draftMeta.curso_ia_link) container.innerHTML += `<a href="${this.draftMeta.curso_ia_link}" target="_blank" class="resource-chip" style="background:#8b5cf6; color:#fff; border:none; font-weight:bold; padding:8px 12px;"><span>🤖</span> IA del Curso</a>`;
+    if(this.draftMeta.drive) container.innerHTML += `<a href="${this.draftMeta.drive}" target="_blank" class="resource-chip" style="background:#10b981; color:#fff; border:none; font-weight:bold; padding:8px 12px;"><span>📁</span> Carpeta Drive</a>`;
   },
 
-  handleSwitch: function(isChecked) {
-    if (isChecked) {
-      this.toggleEditMode(true);
-    } else {
-      if (confirm("¿Descartar cambios no guardados?")) {
-        this.cancelEdit();
-      } else {
-        document.getElementById('edit-mode-switch').checked = true; // Rebota el switch
-      }
+  handleSwitch: function(val) {
+    if (val) this.toggleEditMode(true);
+    else {
+      if(confirm("¿Descartar cambios no guardados?")) this.toggleEditMode(false);
+      else document.getElementById('edit-mode-switch').checked = true;
     }
-  },
-
-  cancelEdit: function() {
-    this.loadCourseData(); // Carga la data limpia y apaga el modo edición visualmente
   },
 
   toggleEditMode: function(isEdit) {
     this.isEditing = isEdit;
-    const contentDiv = document.getElementById('curso-active-content');
+    const content = document.getElementById('curso-active-content');
+    const saveBtn = document.getElementById('btn-save-edit');
     const switchElement = document.getElementById('edit-mode-switch');
+    if (switchElement && switchElement.checked !== isEdit) switchElement.checked = isEdit;
     
-    if (switchElement && switchElement.checked !== isEdit) {
-      switchElement.checked = isEdit;
-    }
-
     if(isEdit) {
-      contentDiv.classList.add('edit-mode-active');
-      document.getElementById('btn-save-edit').style.display = 'inline-block';
-      document.querySelectorAll('.subtab-btn').forEach(b => b.disabled = true);
-    } else {
-      contentDiv.classList.remove('edit-mode-active');
-      document.getElementById('btn-save-edit').style.display = 'none';
-      document.querySelectorAll('.subtab-btn').forEach(b => b.disabled = false);
+      content.classList.add('edit-mode-active');
+      saveBtn.style.display = 'inline-block';
+      document.querySelectorAll('.subtab-btn').forEach(b => b.style.pointerEvents = 'none'); 
       
-      // Dibujar todo en limpio
-      this.renderInicioView();
-      this.renderSesionesSidebar();
-      this.renderDayContent();
+      if(this.currentSubView === 'sesiones' && this.activeSessionId) {
+        const original = App.State.sesiones.find(s => s.id_sesion === this.activeSessionId);
+        this.draftSession = JSON.parse(JSON.stringify(original || {}));
+        
+        let metaObj = {};
+        try { metaObj = (typeof this.draftSession.meta_json === 'string') ? JSON.parse(this.draftSession.meta_json) : (this.draftSession.meta_json || {}); } catch(e){}
+        
+        this.draftSessionIA = metaObj.chat_ia || '';
+
+        if (Array.isArray(metaObj.recursos)) {
+            this.draftSessionResources = [...metaObj.recursos];
+        } else {
+            this.draftSessionResources = [];
+            Object.keys(metaObj).forEach(k => {
+                if(k !== 'sandbox' && k !== 'recursos' && k !== 'chat_ia') {
+                    let assumedType = k.toLowerCase().includes('ppt') ? 'DIAPOSITIVAS' : (k.toLowerCase().includes('chat') ? 'CHAT_IA' : 'DOCUMENTO');
+                    this.draftSessionResources.push({ tipo: assumedType, nombre: k.toUpperCase(), link: metaObj[k] });
+                }
+            });
+        }
+        this.renderSesionesSidebar(); 
+      }
+    } else {
+      content.classList.remove('edit-mode-active');
+      saveBtn.style.display = 'none';
+      document.querySelectorAll('.subtab-btn').forEach(b => b.style.pointerEvents = 'auto');
+      
+      this.draftSessionResources = []; 
+      this.draftSessionIA = '';
+      if(this.currentSubView === 'inicio') this.renderInicioView();
+      if(this.currentSubView === 'sesiones') this.renderSesionesSidebar();
     }
   },
 
   renderInicioView: function() {
-    document.getElementById('inicio-fecha').value = this.draftMeta.fecha_inicio || '';
-    document.getElementById('inicio-hora').value = this.draftMeta.hora || '';
-    document.getElementById('inicio-zoom').value = this.draftMeta.link || '';
-    document.getElementById('inicio-drive').value = this.draftMeta.drive || '';
-    document.getElementById('inicio-ia').value = this.draftMeta.curso_ia_link || '';
-
-    document.getElementById('inicio-notas-read').innerText = this.draftMeta.notas_generales || 'No hay notas registradas.';
-    document.getElementById('inicio-notas-edit').value = this.draftMeta.notas_generales || '';
-
+    const fields = {
+      'inicio-dias': this.draftMeta.dias, 'inicio-hora': this.draftMeta.horario,
+      'inicio-fecha': this.draftMeta.fecha_inicio, 'inicio-zoom': this.draftMeta.link,
+      'inicio-drive': this.draftMeta.drive, 'inicio-ia': this.draftMeta.curso_ia_link,
+      'inicio-notas-edit': this.draftMeta.notas_generales
+    };
+    for(let id in fields) {
+      const el = document.getElementById(id);
+      if(el) el.value = fields[id] || '';
+    }
+    document.getElementById('inicio-notas-read').innerText = this.draftMeta.notas_generales || 'Sin notas.';
     this.renderGeneralList('tareas', 'list-inicio-tareas');
     this.renderGeneralList('materiales', 'list-inicio-materiales');
   },
 
   renderGeneralList: function(type, containerId) {
     const container = document.getElementById(containerId);
-    container.innerHTML = '';
     const list = this.draftMeta[type] || [];
-
-    if(list.length === 0) {
-      container.innerHTML = `<span style="font-size: 12px; color: #94a3b8;">No hay ${type} registrados.</span>`;
-      return;
-    }
-
-    list.forEach((item, index) => {
-      let htmlRead = `<a href="${item.link}" target="_blank" class="resource-chip read-only"><span>${type === 'materiales' ? '📚' : '🎯'}</span> ${item.nombre}</a>`;
-      let htmlEdit = `
-        <div class="resource-row edit-only" style="width: 100%;">
-          <input type="text" class="form-input" value="${item.nombre}" onchange="ModuleCursos.updateGeneralItem('${type}', ${index}, 'nombre', this.value)" placeholder="Nombre" style="margin:0; width: 40%;">
-          <input type="url" class="form-input" value="${item.link}" onchange="ModuleCursos.updateGeneralItem('${type}', ${index}, 'link', this.value)" placeholder="Enlace URL" style="margin:0; flex:1;">
-          <button onclick="ModuleCursos.removeGeneralItem('${type}', ${index})" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Eliminar">🗑️</button>
+    container.innerHTML = list.length === 0 ? `<span style="font-size:12px; color:#94a3b8">No hay registros.</span>` : '';
+    
+    list.forEach((item, idx) => {
+      container.innerHTML += `
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <a href="${item.link}" target="_blank" class="resource-chip read-only" style="justify-content: center; background: #f8fafc;">
+             <span>${type==='tareas'?'🎯':'📚'}</span> <strong>${item.nombre || 'Sin Título'}</strong>
+          </a>
+          <div class="resource-row edit-only">
+            <input type="text" class="form-input" value="${item.nombre}" oninput="ModuleCursos.draftMeta['${type}'][${idx}].nombre = this.value" placeholder="Nombre" style="width:40%">
+            <input type="url" class="form-input" value="${item.link}" oninput="ModuleCursos.draftMeta['${type}'][${idx}].link = this.value" placeholder="URL" style="flex:1">
+            <button onclick="ModuleCursos.removeGeneralItem('${type}', ${idx})" style="border:none; background:none; cursor:pointer; font-size:16px;" title="Eliminar">🗑️</button>
+          </div>
         </div>`;
-      container.innerHTML += `<div style="display: flex; flex-direction: column;">${htmlRead}${htmlEdit}</div>`;
     });
   },
 
   renderSesionesSidebar: function() {
-    const container = document.getElementById('sesiones-sidebar-list');
-    container.innerHTML = '';
-    
-    let baseDate = this.draftMeta.fecha_inicio ? new Date(this.draftMeta.fecha_inicio + 'T00:00:00') : null;
+    let crearBtnsHTML = '';
+    if(this.isEditing) {
+        crearBtnsHTML = `
+        <div class="edit-only" style="margin-bottom: 16px; padding: 12px; background: #fff; border-radius: 8px; border: 1px dashed #cbd5e1; display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="width: 100%; font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase;">Añadir Nuevo:</span>
+            <button class="btn-add" style="flex: 1; background: #eff6ff; color: #2563eb; border-color: #bfdbfe;" onclick="ModuleCursos.addRelationalActivity('Día')">📅 Día</button>
+            <button class="btn-add" style="flex: 1; background: #fef3c7; color: #d97706; border-color: #fde68a;" onclick="ModuleCursos.addRelationalActivity('Tarea')">📝 Tarea</button>
+            <button class="btn-add" style="flex: 1; background: #f3e8ff; color: #9333ea; border-color: #e9d5ff;" onclick="ModuleCursos.addRelationalActivity('Práctica')">🔬 Práct.</button>
+            <button class="btn-add" style="flex: 1; background: #ecfdf5; color: #059669; border-color: #a7f3d0;" onclick="ModuleCursos.addRelationalActivity('Exposición')">📢 Expo.</button>
+        </div>`;
+    }
 
-    for(let i=1; i<=this.draftMeta.sesiones; i++) {
-      const s = this.draftMeta.sesiones_detalle[i] || {};
+    const mainView = document.getElementById('view-sesiones');
+    mainView.innerHTML = `
+      <div style="display: flex; height: 100%;">
+        <div id="sesiones-sidebar-container" style="width: ${this.sidebarOpen ? '260px' : '0px'}; border-right: ${this.sidebarOpen ? '1px solid #e2e8f0' : 'none'}; background: #f8fafc; overflow-y: auto; display: flex; flex-direction: column; transition: all 0.3s ease; padding: ${this.sidebarOpen ? '12px' : '0px'};">
+            ${crearBtnsHTML}
+            <div id="sesiones-sidebar-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+        <div style="flex: 1; padding: 24px; overflow-y: auto; background: #fff;" id="session-detail-container"></div>
+      </div>
+    `;
+
+    const listContainer = document.getElementById('sesiones-sidebar-list');
+    const sesiones = (App.State.sesiones || []).filter(s => String(s.id_curricula).trim() === String(this.currentCursoId).trim())
+      .sort((a, b) => (parseInt(a.orden) || 0) - (parseInt(b.orden) || 0));
+
+    if(sesiones.length === 0) {
+      if(listContainer) listContainer.innerHTML = `<div style="text-align:center; padding:20px; font-size:12px; color:#94a3b8">Sin actividades en este curso.</div>`;
+      this.activeSessionId = null; 
+      this.renderSessionDetail();
+      return;
+    }
+
+    if(!this.activeSessionId || !sesiones.find(s => s.id_sesion === this.activeSessionId)) {
+      this.activeSessionId = sesiones[0].id_sesion;
+    }
+
+    const getIconoTipo = (t) => {
+        if(t==='Día') return '📅'; if(t==='Tarea') return '📝'; if(t==='Práctica') return '🔬'; if(t==='Exposición') return '📢'; return '📌';
+    };
+
+    const grouped = {};
+    sesiones.forEach(s => {
+        const t = s.tipo || 'Otros';
+        if(!grouped[t]) grouped[t] = [];
+        grouped[t].push(s);
+    });
+
+    Object.keys(grouped).forEach(tipo => {
+        if(this.expandedGroups[tipo] === undefined) this.expandedGroups[tipo] = true;
+        
+        const header = document.createElement('div');
+        header.className = 'group-header';
+        header.innerHTML = `<span>${getIconoTipo(tipo)} ${tipo}s (${grouped[tipo].length})</span> <span>${this.expandedGroups[tipo] ? '▼' : '▶'}</span>`;
+        header.onclick = () => this.toggleGroup(tipo);
+        if(listContainer) listContainer.appendChild(header);
+
+        if (this.expandedGroups[tipo]) {
+            const childContainer = document.createElement('div');
+            childContainer.style.display = 'flex'; childContainer.style.flexDirection = 'column'; childContainer.style.gap = '2px'; childContainer.style.marginBottom = '8px';
+            
+            grouped[tipo].forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = (s.id_sesion === this.activeSessionId) ? 'day-btn active' : 'day-btn';
+                btn.innerHTML = `<span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${s.nombre}</span>`;
+                btn.onclick = () => {
+                    if(this.isEditing) return alert("Guarda o descarta tus cambios antes de cambiar de actividad.");
+                    this.activeSessionId = s.id_sesion;
+                    this.renderSesionesSidebar();
+                };
+                childContainer.appendChild(btn);
+            });
+            if(listContainer) listContainer.appendChild(childContainer);
+        }
+    });
+
+    this.renderSessionDetail();
+  },
+
+  renderSessionDetail: function() {
+    const container = document.getElementById('session-detail-container');
+    if (!this.activeSessionId || !container) { if(container) container.innerHTML = ''; return; }
+
+    const getIcon = (type) => {
+         const icons = { 'DOCUMENTO': '📄', 'EXCEL': '📊', 'DIAPOSITIVAS': '🖥️', 'CHAT_IA': '🤖', 'ENLACE': '🔗' };
+         return icons[type] || '📄';
+    };
+
+    // BOTÓN DE OCULTAR NATIVO (IZQUIERDA)
+    const toggleBtnHtml = `<button onclick="ModuleCursos.toggleSidebar()" style="background:transparent; border:none; padding:0; cursor:pointer; color:#94a3b8; font-size: 20px; transition:0.2s; margin-right: 12px;" title="${this.sidebarOpen ? 'Ocultar Panel' : 'Mostrar Panel'}">${this.sidebarOpen ? '☰' : '➡️'}</button>`;
+
+    // VISTA MODO EDICIÓN
+    if (this.isEditing) {
+      const editHTML = this.draftSessionResources.map((res, idx) => `
+        <div class="resource-row">
+          <select class="form-input" style="width:140px; font-weight:bold;" onchange="ModuleCursos.draftSessionResources[${idx}].tipo = this.value">
+             <option value="DOCUMENTO" ${res.tipo==='DOCUMENTO'?'selected':''}>📄 Documento</option>
+             <option value="EXCEL" ${res.tipo==='EXCEL'?'selected':''}>📊 Excel/Sheet</option>
+             <option value="DIAPOSITIVAS" ${res.tipo==='DIAPOSITIVAS'?'selected':''}>🖥️ Diapositivas</option>
+             <option value="ENLACE" ${res.tipo==='ENLACE'?'selected':''}>🔗 Enlace</option>
+          </select>
+          <input type="text" class="form-input" value="${res.nombre}" oninput="ModuleCursos.draftSessionResources[${idx}].nombre = this.value" placeholder="Nombre (Ej: Tarea 1)" style="width:160px;">
+          <input type="url" id="res-link-${idx}" class="form-input" value="${res.link}" oninput="ModuleCursos.draftSessionResources[${idx}].link = this.value" placeholder="https://..." style="flex:1">
+          
+          <button id="btn-drive-${idx}" onclick="ModuleCursos.crearArchivoEnDrive(${idx})" class="btn-add" style="background:#10b981; color:white; border:none;" title="Generar archivo en Drive">⚡ Crear</button>
+          <button onclick="ModuleCursos.eliminarArchivo(${idx})" style="border:none; background:none; cursor:pointer; font-size:16px;" title="Eliminar">🗑️</button>
+        </div>`).join('');
+
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:15px; margin-bottom:20px;">
+          ${toggleBtnHtml}
+          <div style="flex:1">
+             <div style="display:flex; gap:10px; margin-bottom: 6px;">
+                <input type="text" class="form-input" value="${this.draftSession.nombre}" oninput="ModuleCursos.draftSession.nombre=this.value" style="font-size:20px; font-weight:800; color:#0f172a; border-color:#e2e8f0; flex:1;" placeholder="Título de la Actividad">
+                <input type="date" class="form-input" value="${this.draftSession.fecha}" oninput="ModuleCursos.draftSession.fecha=this.value" style="width:160px; color:#64748b;">
+             </div>
+             <span style="background:#e0e7ff; color:#4f46e5; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">📍 Editando Guía de la Sesión</span>
+          </div>
+        </div>
+
+        <div class="edit-only" style="display:flex; align-items:center; gap: 15px; background: #f5f3ff; border: 1px solid #ddd6fe; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+           <div style="font-size:24px;">🤖</div>
+           <div style="flex:1;">
+              <div style="font-size:13px; font-weight:bold; color:#5b21b6; margin-bottom:2px;">Asistente Inteligencia Artificial</div>
+              <div style="font-size:11px; color:#7c3aed;">Configura el enlace del perfil (ChatGPT/Gemini) para esta sesión</div>
+           </div>
+           <input type="url" class="form-input" value="${this.draftSessionIA}" oninput="ModuleCursos.draftSessionIA = this.value" placeholder="https://chatgpt.com/..." style="width: 50%; border-color:#c4b5fd;">
+        </div>
+
+        <div class="op-card">
+          <div class="card-header">
+             <h4 style="margin:0; color:#1e293b;">📂 Recursos Internos</h4>
+             <button class="btn-add edit-only" style="background:#f1f5f9; color:#0f172a;" onclick="ModuleCursos.addSessionResource()">+ Añadir Archivo</button>
+          </div>
+          <div class="edit-only" style="display:flex; flex-direction:column; gap:10px;">${editHTML || '<p style="color:#94a3b8; font-size:13px; margin:0; text-align:center;">Agrega documentos, hojas de cálculo o diapositivas.</p>'}</div>
+        </div>
+      `;
+    } 
+    // VISTA MODO LECTURA
+    else {
+      const session = App.State.sesiones.find(s => s.id_sesion === this.activeSessionId);
+      if(!session) return;
       
-      let displayDate = s.fecha;
-      if(!displayDate && baseDate) {
-        let d = new Date(baseDate);
-        d.setDate(d.getDate() + (i - 1) * 7); 
-        displayDate = d.toISOString().split('T')[0]; 
+      let meta = {};
+      try { meta = (typeof session.meta_json === 'string') ? JSON.parse(session.meta_json) : (session.meta_json || {}); } catch(e){}
+
+      let iaLink = meta.chat_ia || '';
+      let resources = Array.isArray(meta.recursos) ? meta.recursos : [];
+      
+      if (resources.length === 0 && Object.keys(meta).length > 0) {
+         Object.keys(meta).forEach(k => {
+             if(k !== 'sandbox' && k !== 'recursos' && k !== 'chat_ia') {
+                 let assumedType = k.toLowerCase().includes('ppt') ? 'DIAPOSITIVAS' : (k.toLowerCase().includes('chat') ? 'CHAT_IA' : 'DOCUMENTO');
+                 resources.push({ tipo: assumedType, nombre: k.toUpperCase(), link: meta[k] });
+             }
+         });
       }
 
-      const btn = document.createElement('button');
-      btn.className = (i === this.currentDayNum) ? 'day-btn active' : 'day-btn';
-      btn.onclick = () => { this.currentDayNum = i; this.renderDayContent(); this.renderSesionesSidebar(); };
-      
-      const hasContent = Object.keys(s).filter(k => k !== 'tema' && k !== 'fecha').length > 0;
-      btn.innerText = `${hasContent ? '🔵' : '⚪'} Día ${i}`;
-      container.appendChild(btn);
+      const readHTML = resources.length === 0 ? '<p style="color:#94a3b8; font-size:13px; margin:0; text-align:center;">Sin recursos asignados a esta actividad.</p>' : 
+        `<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px;">` +
+        resources.map(r => `<a href="${r.link}" target="_blank" class="resource-chip" style="justify-content:center;"><span>${getIcon(r.tipo)}</span> <strong>${r.nombre}</strong></a>`).join('') +
+        `</div>`;
+
+      const iaCardHTML = iaLink ? `
+        <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+           <div>
+               <h4 style="margin:0 0 4px 0; color:#5b21b6; font-size:15px;">🤖 Asistente Inteligencia Artificial</h4>
+               <span style="font-size:12px; color:#7c3aed;">Perfil específico para esta sesión.</span>
+           </div>
+           <a href="${iaLink}" target="_blank" class="btn-add" style="background:#8b5cf6; color:#fff; border:none; padding:8px 16px; font-size:13px; text-decoration:none;">Abrir Chat</a>
+        </div>
+      ` : '';
+
+      container.innerHTML = `
+        <div style="display:flex; align-items:flex-start; border-bottom:1px solid #f1f5f9; padding-bottom:15px; margin-bottom:20px;">
+           <div style="margin-top:4px;">${toggleBtnHtml}</div>
+           <div style="flex:1">
+              <div style="display:flex; align-items:center; gap:10px;">
+                 <h3 style="margin:0; font-size:24px; color:#0f172a; font-weight:800;">${session.nombre}</h3>
+                 <span style="background:#e0e7ff; color:#4f46e5; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">📍 Guía de la Sesión</span>
+              </div>
+              <div style="margin-top:8px; display:flex; gap:10px; align-items:center;">
+                  <span style="font-size:13px; color:#64748b; font-weight:600; background:#f1f5f9; padding:4px 8px; border-radius:4px;">📅 ${session.fecha || 'Sin fecha asignada'}</span>
+                  <span style="font-size:13px; color:#64748b; font-weight:600; background:#f1f5f9; padding:4px 8px; border-radius:4px;">🏷️ ${session.tipo}</span>
+              </div>
+           </div>
+        </div>
+        
+        ${iaCardHTML}
+
+        <div class="op-card">
+          <div class="card-header" style="border-bottom:none; margin-bottom:8px;">
+             <h4 style="margin:0; color:#1e293b;">📂 Recursos de la Sesión</h4>
+          </div>
+          <div class="read-only">${readHTML}</div>
+        </div>
+      `;
     }
   },
 
-  renderDayContent: function() {
-    const s = this.draftMeta.sesiones_detalle[this.currentDayNum] || {};
+  // === MÉTODOS Y ACCIONES ===
+  crearArchivoEnDrive: function(idx) {
+    const res = this.draftSessionResources[idx];
+    if(!res.nombre) return alert("Escribe un Nombre para el archivo antes de crearlo.");
+    if(res.tipo === 'ENLACE') return alert("Los 'Enlaces' se pegan manualmente. Si quieres crear un archivo, cambia el tipo a Documento, Excel o Diapositivas.");
+
+    const btn = document.getElementById(`btn-drive-${idx}`);
+    if(btn) { btn.innerText = "⏳"; btn.disabled = true; }
+
+    google.script.run
+      .withSuccessHandler((response) => {
+         if(response.status === 'success') {
+           this.draftSessionResources[idx].link = response.url;
+           this.renderSessionDetail(); 
+         } else {
+           alert("Error al comunicarse con Drive: " + response.message);
+           if(btn) { btn.innerText = "⚡ Crear"; btn.disabled = false; }
+         }
+      })
+      .crearArchivoDriveSPA(res.tipo, res.nombre);
+  },
+
+  eliminarArchivo: function(idx) {
+    const res = this.draftSessionResources[idx];
+    if(res.link && res.link.includes('drive.google.com') && confirm("¿Deseas enviar también el archivo físico a la Papelera de Google Drive?")) {
+        google.script.run.eliminarArchivoDriveSPA(res.link);
+    }
+    this.draftSessionResources.splice(idx, 1); 
+    this.renderSessionDetail(); 
+  },
+
+  addRelationalActivity: function(tipo) {
+    if(!this.isEditing) return;
+    const total = App.State.sesiones.filter(s => String(s.id_curricula).trim() === String(this.currentCursoId).trim() && s.tipo === tipo).length;
+    const nueva = {
+      id_sesion: 'SES_' + Date.now(), id_curricula: this.currentCursoId, tipo: tipo,
+      nombre: `${tipo} ${total + 1}`, fecha: new Date().toISOString().split('T')[0], orden: 99, meta_json: { recursos: [], chat_ia: '' }
+    };
     
-    let autoDate = '';
-    if(this.draftMeta.fecha_inicio) {
-        let d = new Date(this.draftMeta.fecha_inicio + 'T00:00:00');
-        d.setDate(d.getDate() + (this.currentDayNum - 1) * 7);
-        autoDate = d.toISOString().split('T')[0];
-    }
-    
-    const finalDate = s.fecha || autoDate;
-
-    document.getElementById('day-title').innerText = `Día ${this.currentDayNum}: ${s.tema || 'Tema por definir'}`;
-    document.getElementById('day-date-read').innerText = finalDate ? `📅 ${finalDate}` : 'Fecha no asignada';
-    document.getElementById('day-tema-edit').value = s.tema || '';
-    document.getElementById('day-date-edit').value = finalDate;
-
-    const readContainer = document.getElementById('day-resources-read');
-    const editContainer = document.getElementById('day-resources-edit');
-    readContainer.innerHTML = ''; editContainer.innerHTML = '';
-
-    const dynamicKeys = Object.keys(s).filter(k => k !== 'tema' && k !== 'fecha');
-
-    if(dynamicKeys.length === 0) {
-      readContainer.innerHTML = '<span style="font-size: 12px; color: #94a3b8;">No hay recursos agregados a esta sesión.</span>';
-    }
-
-    dynamicKeys.forEach(key => {
-      let icon = key.toLowerCase().includes('chat') ? '🤖' : (key.toLowerCase().includes('ppt') ? '🖥️' : '📄');
-      
-      readContainer.innerHTML += `
-        <a href="${s[key]}" target="_blank" class="resource-chip" style="width: fit-content;">
-          <span>${icon}</span> <strong>${key.toUpperCase()}:</strong> Abrir
-        </a>`;
-
-      editContainer.innerHTML += `
-        <div class="resource-row">
-          <input type="text" class="form-input" value="${key}" onchange="ModuleCursos.updateDayKey(${this.currentDayNum}, '${key}', this.value)" style="width: 140px; margin:0; font-weight:bold; color:#1e293b;" placeholder="Ej: borrador, practica...">
-          <input type="url" class="form-input" placeholder="Enlace del recurso" value="${s[key]}" onchange="ModuleCursos.updateDayVal(${this.currentDayNum}, '${key}', this.value)" style="flex:1; margin:0;">
-          <button onclick="ModuleCursos.removeDayResource(${this.currentDayNum}, '${key}')" style="background:none; border:none; color:#ef4444; cursor:pointer;" title="Eliminar">🗑️</button>
-        </div>`;
-    });
+    App.State.sesiones.push(nueva);
+    this.activeSessionId = nueva.id_sesion;
+    this.draftSession = JSON.parse(JSON.stringify(nueva));
+    this.draftSessionResources = []; 
+    this.draftSessionIA = '';
+    this.expandedGroups[tipo] = true;
+    this.renderSesionesSidebar();
   },
 
-  // Funciones Logísticas
-  addGeneralItem: function(type) {
-    if(!this.draftMeta[type]) this.draftMeta[type] = [];
-    this.draftMeta[type].push({ nombre: '', link: '' });
-    this.renderInicioView();
+  addSessionResource: function() {
+    this.draftSessionResources.push({ tipo: 'DOCUMENTO', nombre: '', link: '' });
+    this.renderSessionDetail(); 
   },
-  updateGeneralItem: function(type, index, field, value) {
-    this.draftMeta[type][index][field] = value;
+  
+  addGeneralItem: function(type) { 
+    this.draftMeta[type].push({nombre:'', link:''}); 
+    this.renderInicioView(); 
   },
-  removeGeneralItem: function(type, index) {
-    this.draftMeta[type].splice(index, 1);
-    this.renderInicioView();
-  },
-
-  addDayResource: function() {
-    let num = 1;
-    while(this.draftMeta.sesiones_detalle[this.currentDayNum][`nuevo_doc_${num}`] !== undefined) num++;
-    this.draftMeta.sesiones_detalle[this.currentDayNum][`nuevo_doc_${num}`] = "";
-    this.renderDayContent();
-  },
-  updateDayKey: function(dayNum, oldKey, newKey) {
-    if(!newKey || oldKey === newKey) return;
-    this.draftMeta.sesiones_detalle[dayNum][newKey] = this.draftMeta.sesiones_detalle[dayNum][oldKey];
-    delete this.draftMeta.sesiones_detalle[dayNum][oldKey];
-    this.renderDayContent();
-  },
-  updateDayVal: function(dayNum, key, val) {
-    this.draftMeta.sesiones_detalle[dayNum][key] = val;
-  },
-  removeDayResource: function(dayNum, key) {
-    delete this.draftMeta.sesiones_detalle[dayNum][key];
-    this.renderDayContent();
+  
+  removeGeneralItem: function(type, idx) { 
+    this.draftMeta[type].splice(idx, 1); 
+    this.renderInicioView(); 
   },
 
   saveCurrentView: function() {
-    const cursoIndex = App.State.cursosActivos.findIndex(c => c.id_curricula === this.currentCursoId);
-    let curso = App.State.cursosActivos[cursoIndex];
+    const btn = document.getElementById('btn-save-edit');
+    btn.innerText = '⏳ Guardando...'; btn.disabled = true;
 
     if(this.currentSubView === 'inicio') {
+      const idx = App.State.curricula.findIndex(c => c.id_curricula === this.currentCursoId);
+      this.draftMeta.dias = document.getElementById('inicio-dias').value;
+      this.draftMeta.horario = document.getElementById('inicio-hora').value;
       this.draftMeta.fecha_inicio = document.getElementById('inicio-fecha').value;
-      this.draftMeta.hora = document.getElementById('inicio-hora').value;
       this.draftMeta.link = document.getElementById('inicio-zoom').value;
       this.draftMeta.drive = document.getElementById('inicio-drive').value;
       this.draftMeta.curso_ia_link = document.getElementById('inicio-ia').value;
       this.draftMeta.notas_generales = document.getElementById('inicio-notas-edit').value;
-    }
-    else if(this.currentSubView === 'sesiones') {
-      const temaVal = document.getElementById('day-tema-edit').value;
-      const dateVal = document.getElementById('day-date-edit').value;
       
-      if(temaVal) this.draftMeta.sesiones_detalle[this.currentDayNum].tema = temaVal;
-      if(dateVal) this.draftMeta.sesiones_detalle[this.currentDayNum].fecha = dateVal;
+      App.State.curricula[idx].meta_json = JSON.stringify(this.draftMeta);
+      
+      google.script.run.withSuccessHandler(() => {
+        this.toggleEditMode(false); 
+      }).guardarCursosSPA(App.State.curricula);
+    } 
+    else {
+      let cleanResources = this.draftSessionResources.filter(r => r.nombre.trim() !== '');
+      this.draftSession.meta_json = { 
+          recursos: cleanResources,
+          chat_ia: this.draftSessionIA
+      };
+
+      const sIdx = App.State.sesiones.findIndex(s => s.id_sesion === this.activeSessionId);
+      if(sIdx > -1) App.State.sesiones[sIdx] = this.draftSession;
+      
+      google.script.run.withSuccessHandler(() => {
+        this.toggleEditMode(false); 
+      }).guardarSesionesSPA(App.State.sesiones);
     }
-
-    curso.meta_json = JSON.stringify(this.draftMeta);
-    App.State.cursosActivos[cursoIndex] = curso;
-
-    alert("Operativa guardada en la RAM. La estructura JSON está optimizada.");
-    
-    // Al guardar, recargamos los datos para aplicar el modo lectura y refrescar botones superiores
-    this.loadCourseData();
   }
 };
 </script>
