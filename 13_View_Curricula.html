@@ -1,0 +1,461 @@
+<div style="margin: -20px; padding: 16px 20px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background: #f4f7f6;">
+  
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-shrink: 0;">
+    <h2 style="margin:0; color:#2c3e50;">📚 Gestor de Curricula</h2>
+    <div id="estadoCurricula" class="panel-estado" style="margin:0;">Sistema listo.</div>
+  </div>
+
+  <div class="panel" style="flex-grow: 1; display: flex; flex-direction: column; margin: 0; padding: 12px; min-height: 0; border: 1px solid var(--color-borde); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    
+    <div style="flex-shrink: 0; margin-bottom: 12px; display: flex; gap: 8px; align-items: stretch;">
+      <div style="flex-grow: 1; position: relative; display: flex;">
+        <input type="text" id="searchCurricula" placeholder="🔍 Buscar por Nombre o Código..." style="width: 100%; box-sizing: border-box; padding-left: 12px; border: 1px solid #ccc; border-radius: 4px;" oninput="window.ViewCurricula.filtrar()">
+      </div>
+      <button class="btn-sec" id="btnMostrarInactivosCurr" onclick="window.ViewCurricula.toggleInactivos()">👀 Mostrar Todos</button>
+      <button class="btn-sec" onclick="App.iniciar()">🔄 Actualizar BD</button>
+      <button class="btn-ok" onclick="alert('Funcionalidad de creación en desarrollo')">➕ Nuevo Curso</button>
+    </div>
+    
+    <div id="tablaCurriculaContainer" style="flex-grow: 1; overflow: auto; border: 1px solid #c2d7fa; border-radius: 6px; background: #fff; position: relative;">
+    </div>
+
+  </div>
+</div>
+
+<div id="modalMetaCurricula" class="modal-overlay">
+  <div class="modal-box strict-modal" style="width: 700px;">
+    <div class="modal-header">
+      <h3 style="margin:0; color:var(--color-primario);">⚙️ Configuración del Curso</h3>
+      <div style="font-size:11px; color:#666; margin-top:4px;">ID: <b id="lblMetaCurrId" style="background:#eee; padding:2px 4px; border-radius:4px;"></b></div>
+    </div>
+    
+    <div class="strict-scrollable">
+      
+      <div style="font-size: 10px; font-weight: bold; color: #5f6368; border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 4px;">DATOS PRINCIPALES</div>
+      <div class="input-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="input-group" style="grid-column: span 2;">
+          <label>Nombre del Curso</label>
+          <input type="text" id="metaCurrNombre" placeholder="Ej: Ingeniería de Diseño II">
+        </div>
+        <div class="input-group"><label>Código</label><input type="text" id="metaCurrCodigo" placeholder="MTD-401"></div>
+        <div class="input-group"><label>Créditos</label><input type="number" id="metaCurrCreditos" placeholder="4"></div>
+        <div class="input-group"><label>Orden en Malla</label><input type="number" id="metaCurrOrden" placeholder="10"></div>
+      </div>
+
+      <div style="font-size: 10px; font-weight: bold; color: #5f6368; border-bottom: 1px solid #eee; margin-top: 16px; margin-bottom: 10px; padding-bottom: 4px;">PROGRAMACIÓN Y HORARIOS</div>
+      <div class="input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div class="input-group"><label>Fecha de Inicio</label><input type="date" id="metaCurrFechaInicio"></div>
+        <div class="input-group"><label>Días de Clase</label><input type="text" id="metaCurrDias" placeholder="Ej: Miércoles"></div>
+        <div class="input-group"><label>Hora de Inicio</label><input type="time" id="metaCurrHora"></div>
+        <div class="input-group"><label>Duración (Horas)</label><input type="number" id="metaCurrDuracion" placeholder="3"></div>
+      </div>
+
+      <div style="font-size: 10px; font-weight: bold; color: #5f6368; border-bottom: 1px solid #eee; margin-top: 16px; margin-bottom: 10px; padding-bottom: 4px;">ENLACES EXTERNOS (AULAS Y CARPETAS)</div>
+      <div class="input-grid" style="grid-template-columns: 1fr;">
+        <div class="input-group"><label>Enlace de Sala (Zoom / Meet)</label><input type="url" id="metaCurrLink" placeholder="https://zoom.us/j/..."></div>
+        <div class="input-group"><label>Carpeta de Google Drive</label><input type="url" id="metaCurrDrive" placeholder="https://drive.google.com/..."></div>
+        <div class="input-group"><label>Asistente Inteligente (Link Chat IA)</label><input type="url" id="metaCurrIA" placeholder="https://chatgpt.com/g/..."></div>
+      </div>
+
+      <div style="font-size: 10px; font-weight: bold; color: #5f6368; border-bottom: 1px solid #eee; margin-top: 16px; margin-bottom: 10px; padding-bottom: 4px;">NOTAS Y OBSERVACIONES</div>
+      <div class="input-grid" style="grid-template-columns: 1fr;">
+        <div class="input-group">
+          <label>Notas Generales del Curso</label>
+          <textarea id="metaCurrNotasGenerales" rows="2" style="width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-family: inherit; font-size: 12px; box-sizing: border-box;"></textarea>
+        </div>
+        <div class="input-group"><label>Observaciones Privadas / Administrativas</label><input type="text" id="metaCurrObs" placeholder="..."></div>
+      </div>
+
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="document.getElementById('modalMetaCurricula').style.display='none'">Cancelar</button>
+      <button id="btnGuardarMetaCurr" class="btn-ok" onclick="window.ViewCurricula.guardarMetadatos()">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalDocsCurricula" class="modal-overlay">
+  <div class="modal-box strict-modal" style="width: 800px;">
+    <div class="modal-header">
+      <h3 style="margin:0; color:var(--color-primario);">📁 Archivos y Sílabos del Curso</h3>
+      <div style="font-size:11px; color:#666; margin-top:4px;">Curso: <b id="lblDocsCurrNombre"></b></div>
+    </div>
+    
+    <div style="padding: 16px 24px; border-bottom: 1px solid #eee; background: #f8fafc; display: flex; gap: 8px; align-items: center;">
+      <input type="text" id="txtNuevoDocNombre" placeholder="Nombre del nuevo archivo o material..." style="flex-grow: 1; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;" onkeypress="if(event.key === 'Enter') window.ViewCurricula.agregarDocRapido()">
+      <button class="btn-pri" onclick="window.ViewCurricula.agregarDocRapido()" style="padding: 10px 20px;">➕ Agregar</button>
+    </div>
+
+    <div class="strict-scrollable" id="listaDocsCurrContenedor" style="padding: 0;">
+      </div>
+    
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="document.getElementById('modalDocsCurricula').style.display='none'">Cerrar sin Guardar</button>
+      <button id="btnGuardarDocsCurr" class="btn-ok" onclick="window.ViewCurricula.guardarDocs()">💾 Guardar Todos los Archivos</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalMetaDocCurricula" class="modal-overlay" style="z-index: 2100; background: rgba(0,0,0,0.7);">
+  <div class="modal-box" style="width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+    <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+      <h3 style="margin:0; color:var(--color-primario);">⚙️ Metadatos del Archivo</h3>
+      <p style="font-size:11px; color:#666; margin-top:4px;">Edite las propiedades específicas de este registro.</p>
+    </div>
+    
+    <div class="input-grid" style="grid-template-columns: 1fr; margin-top: 16px;">
+      <div class="input-group">
+        <label>Nombre / Etiqueta del Archivo</label>
+        <input type="text" id="metaDocNombre" placeholder="Ej: Sílabo 2026-I">
+      </div>
+      <div class="input-group">
+        <label>Tipo de Documento</label>
+        <select id="metaDocTipo">
+          <option value="SÍLABO">Sílabo</option>
+          <option value="GUÍA">Guía Académica</option>
+          <option value="PDF">PDF General</option>
+          <option value="LINK">Link Web</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Enlace Externo (Drive, OneDrive, Web)</label>
+        <input type="url" id="metaDocLink" placeholder="https://...">
+      </div>
+    </div>
+
+    <div class="modal-footer" style="margin-top: 24px;">
+      <button class="btn-sec" onclick="document.getElementById('modalMetaDocCurricula').style.display='none'">Cancelar</button>
+      <button class="btn-pri" onclick="window.ViewCurricula.guardarMetaDocLocal()">✔️ Aplicar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+window.ViewCurricula = {
+  mostrarInactivos: false,
+  currEnEdicion: null,
+  docsEnEdicion: [],
+  docIndexEnEdicion: null, // Nuevo estado para el sub-modal
+
+  render: function() { this.filtrar(); },
+
+  toggleInactivos: function() {
+    this.mostrarInactivos = !this.mostrarInactivos;
+    const btn = document.getElementById('btnMostrarInactivosCurr');
+    btn.innerHTML = this.mostrarInactivos ? '🙈 Ocultar Inactivos' : '👀 Mostrar Todos';
+    this.filtrar();
+  },
+
+  actualizarEstadoUi: function(msg) {
+    document.getElementById('estadoCurricula').textContent = msg;
+  },
+
+  // 1. RENDERIZADO DE TABLA PRINCIPAL
+  filtrar: function() {
+    const query = (document.getElementById('searchCurricula').value || '').toLowerCase().trim();
+    const container = document.getElementById('tablaCurriculaContainer');
+    
+    let filtrados = App.State.curricula.filter(c => {
+      let meta = {}; try { meta = JSON.parse(c.meta_json || '{}'); } catch(e){}
+      if (!this.mostrarInactivos && c.activo === 'INACTIVO') return false;
+      if (!query) return true;
+      return (c.nombre.toLowerCase().includes(query) || (meta.codigo && meta.codigo.toLowerCase().includes(query)));
+    });
+
+    if (filtrados.length === 0) {
+      container.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">No hay cursos para mostrar.</div>';
+      return;
+    }
+
+    let html = `<table style="width: 100%; border-collapse: collapse; text-align: left; font-size:12px;">
+      <thead style="position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <tr style="background: #f1f5f9; color: #334155; border-bottom: 2px solid #cbd5e1;">
+          <th style="padding:12px 10px;">Código</th>
+          <th style="padding:12px 10px;">Nombre del Curso</th>
+          <th style="padding:12px 10px; text-align:center; width: 100px;">Estado</th>
+          <th style="text-align:center; padding:12px 10px; width: 280px;">Acciones Operativas</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    filtrados.forEach(curr => {
+      let meta = {}; try { meta = JSON.parse(curr.meta_json || '{}'); } catch(e){}
+      const isActivo = curr.activo !== 'INACTIVO';
+      const rowStyle = isActivo ? 'background: #fff;' : 'background: #f8fafc; opacity: 0.6;';
+      const badgeEstado = isActivo 
+        ? `<span style="padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; background:#dcfce3; color:#166534;">ACTIVO</span>`
+        : `<span style="padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; background:#fee2e2; color:#b91c1c;">INACTIVO</span>`;
+
+      // Botón Estado
+      const btnEstado = isActivo
+        ? `<button class="btn-icon" style="color:#64748b;" title="Desactivar Curso" onclick="window.ViewCurricula.cambiarEstado('${curr.id_curricula}', 'INACTIVO')">👁️‍🗨️</button>`
+        : `<button class="btn-icon" style="color:#16a34a;" title="Activar Curso" onclick="window.ViewCurricula.cambiarEstado('${curr.id_curricula}', 'ACTIVO')">🟢</button>`;
+
+      // Botón Zoom / Link
+      const btnZoom = meta.link 
+        ? `<a href="${App.escapeHtml(meta.link)}" target="_blank" class="btn-icon" style="text-decoration:none; display:inline-block;" title="Abrir Sala / Videollamada">🎥</a>`
+        : `<button class="btn-icon" style="opacity:0.3; cursor:not-allowed;" title="Sin Sala Configurada">🎥</button>`;
+
+      // Botón Asistente IA
+      const btnIA = meta.curso_ia_link 
+        ? `<a href="${App.escapeHtml(meta.curso_ia_link)}" target="_blank" class="btn-icon" style="text-decoration:none; display:inline-block;" title="Abrir Asistente IA">🤖</a>`
+        : `<button class="btn-icon" style="opacity:0.3; cursor:not-allowed;" title="Sin IA Configurada">🤖</button>`;
+
+      html += `
+        <tr style="border-bottom: 1px solid #e2e8f0; ${rowStyle} transition: 0.2s;">
+          <td style="padding:12px 10px;"><span class="tag tag-reingreso">${App.escapeHtml(meta.codigo || 'S/C')}</span></td>
+          <td style="padding:12px 10px; font-weight:bold; color:#1e293b; font-size:13px;">${App.escapeHtml(curr.nombre)}</td>
+          <td style="padding:12px 10px; text-align:center;">${badgeEstado}</td>
+          <td style="padding:12px 10px; text-align:center;">
+            <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
+              <button class="btn-icon" title="Editar Metadatos" onclick="window.ViewCurricula.abrirModalMetadatos('${curr.id_curricula}')">⚙️</button>
+              <button class="btn-icon" title="Gestor de Archivos" onclick="window.ViewCurricula.abrirModalDocs('${curr.id_curricula}')">📁</button>
+              <button class="btn-icon" title="Ir a Sesiones/Materiales" onclick="window.ViewCurricula.irASesiones('${curr.id_curricula}')">📅</button>
+              
+              <span style="border-left: 1px solid #ddd; height: 16px; display:inline-block; margin: 0 2px;"></span>
+              
+              ${btnZoom}
+              ${btnIA}
+              
+              <span style="border-left: 1px solid #ddd; height: 16px; display:inline-block; margin: 0 2px;"></span>
+              
+              ${btnEstado}
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    container.innerHTML = html + '</tbody></table>';
+  },
+
+  // 2. CAMBIO RÁPIDO DE ESTADO
+  cambiarEstado: function(id, nuevoEstado) {
+    if(!confirm(`¿Deseas marcar este curso como ${nuevoEstado}?`)) return;
+    
+    this.actualizarEstadoUi('Actualizando estado...');
+    const idx = App.State.curricula.findIndex(c => c.id_curricula === id);
+    if(idx > -1) App.State.curricula[idx].activo = nuevoEstado;
+    
+    this.filtrar(); // Render optimista
+
+    google.script.run
+      .withSuccessHandler(() => this.actualizarEstadoUi('Estado actualizado en BD.'))
+      .withFailureHandler(e => { alert("Error: " + e.message); App.iniciar(); })
+      .guardarCurriculaSPA(App.State.curricula);
+  },
+
+  irASesiones: function(id) {
+    if (window.ViewSesiones) window.ViewSesiones.selectedCurriculaId = id;
+    App.Router.go('sesiones', document.getElementById('nav-sesiones'));
+  },
+
+  // =========================================================================
+  // 4. EDITOR DE METADATOS DEL CURSO
+  // =========================================================================
+  abrirModalMetadatos: function(id) {
+    this.currEnEdicion = App.State.curricula.find(c => c.id_curricula === id);
+    if(!this.currEnEdicion) return;
+
+    let meta = {}; 
+    try { meta = JSON.parse(this.currEnEdicion.meta_json || '{}'); } catch(e){}
+
+    document.getElementById('lblMetaCurrId').textContent = id;
+    document.getElementById('metaCurrNombre').value = this.currEnEdicion.nombre || '';
+    document.getElementById('metaCurrCodigo').value = meta.codigo || '';
+    document.getElementById('metaCurrCreditos').value = meta.creditos || '';
+    document.getElementById('metaCurrOrden').value = meta.orden || '';
+    
+    document.getElementById('metaCurrFechaInicio').value = meta.fecha_inicio || '';
+    document.getElementById('metaCurrDias').value = meta.dias || '';
+    document.getElementById('metaCurrHora').value = meta.hora_inicio || '';
+    document.getElementById('metaCurrDuracion').value = meta.duracion || '';
+    
+    document.getElementById('metaCurrLink').value = meta.link || '';
+    document.getElementById('metaCurrDrive').value = meta.drive || '';
+    document.getElementById('metaCurrIA').value = meta.curso_ia_link || '';
+    
+    document.getElementById('metaCurrNotasGenerales').value = meta.notas_generales || '';
+    document.getElementById('metaCurrObs').value = meta.observaciones || '';
+
+    document.getElementById('modalMetaCurricula').style.display = 'flex';
+  },
+
+  guardarMetadatos: function() {
+    const btn = document.getElementById('btnGuardarMetaCurr');
+    btn.disabled = true; btn.textContent = '⏳ Guardando...';
+
+    this.currEnEdicion.nombre = document.getElementById('metaCurrNombre').value.trim();
+    
+    let meta = {}; 
+    try { meta = JSON.parse(this.currEnEdicion.meta_json || '{}'); } catch(e){}
+
+    meta.codigo = document.getElementById('metaCurrCodigo').value.trim();
+    meta.creditos = parseInt(document.getElementById('metaCurrCreditos').value) || 0;
+    meta.orden = parseInt(document.getElementById('metaCurrOrden').value) || 0;
+    
+    meta.fecha_inicio = document.getElementById('metaCurrFechaInicio').value;
+    meta.dias = document.getElementById('metaCurrDias').value.trim();
+    meta.hora_inicio = document.getElementById('metaCurrHora').value;
+    meta.duracion = parseInt(document.getElementById('metaCurrDuracion').value) || 0;
+    
+    meta.link = document.getElementById('metaCurrLink').value.trim();
+    meta.drive = document.getElementById('metaCurrDrive').value.trim();
+    meta.curso_ia_link = document.getElementById('metaCurrIA').value.trim();
+    
+    meta.notas_generales = document.getElementById('metaCurrNotasGenerales').value.trim();
+    meta.observaciones = document.getElementById('metaCurrObs').value.trim();
+
+    meta.tareas = meta.tareas || [];
+    meta.materiales = meta.materiales || [];
+    meta.creado = meta.creado || '';
+    
+    this.currEnEdicion.meta_json = JSON.stringify(meta);
+
+    google.script.run
+      .withSuccessHandler(() => {
+        btn.disabled = false; btn.textContent = '💾 Guardar Cambios';
+        document.getElementById('modalMetaCurricula').style.display = 'none';
+        this.filtrar(); 
+        this.actualizarEstadoUi('✅ Metadatos guardados con éxito.');
+      })
+      .withFailureHandler(e => { alert("Error: " + e.message); btn.disabled = false; btn.textContent = '💾 Guardar Cambios'; })
+      .guardarCurriculaSPA(App.State.curricula);
+  },
+
+  // =========================================================================
+  // 5. GESTOR DE ARCHIVOS Y SÍLABOS (NUEVO FLUJO: LECTURA + SUB-MODAL)
+  // =========================================================================
+  abrirModalDocs: function(id) {
+    this.currEnEdicion = App.State.curricula.find(c => c.id_curricula === id);
+    if(!this.currEnEdicion) return;
+
+    document.getElementById('lblDocsCurrNombre').textContent = this.currEnEdicion.nombre;
+    document.getElementById('txtNuevoDocNombre').value = ''; // Limpiar input rápido
+    
+    try { 
+      this.docsEnEdicion = JSON.parse(this.currEnEdicion.documentos || '[]'); 
+      if(!Array.isArray(this.docsEnEdicion)) this.docsEnEdicion = [];
+    } catch(e){ this.docsEnEdicion = []; }
+
+    this.renderListaDocs();
+    document.getElementById('modalDocsCurricula').style.display = 'flex';
+  },
+
+  // Creador rápido solo con nombre
+  agregarDocRapido: function() {
+    const input = document.getElementById('txtNuevoDocNombre');
+    const nombre = input.value.trim();
+    
+    if (!nombre) {
+      alert("Por favor, escriba el nombre del documento.");
+      input.focus();
+      return;
+    }
+
+    this.docsEnEdicion.push({ nombre: nombre, tipo: 'SÍLABO', link: '' });
+    input.value = '';
+    this.renderListaDocs();
+  },
+
+  // Renderizador de Tabla de Solo Lectura
+  renderListaDocs: function() {
+    const cont = document.getElementById('listaDocsCurrContenedor');
+    if (this.docsEnEdicion.length === 0) {
+      cont.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">Aún no hay archivos agregados. Utilice la barra superior para registrar el primero.</div>';
+      return;
+    }
+
+    let html = `<table style="width:100%; border-collapse:collapse; font-size:12px; border-top: 1px solid #eee;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
+          <th style="padding:12px 16px;">Nombre del Archivo</th>
+          <th style="padding:12px 16px; width:120px;">Tipo</th>
+          <th style="padding:12px 16px; text-align:center; width:80px;">Enlace</th>
+          <th style="padding:12px 16px; text-align:center; width:120px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    this.docsEnEdicion.forEach((doc, idx) => {
+      const linkBadge = doc.link 
+        ? `<a href="${App.escapeHtml(doc.link)}" target="_blank" style="color:#2563eb; text-decoration:none; font-weight:bold; padding:4px 8px; background:#eff6ff; border-radius:4px;">Ver ↗</a>`
+        : `<span style="color:#94a3b8; font-size:11px;">Sin Enlace</span>`;
+
+      html += `
+        <tr style="border-bottom:1px solid #eee; transition: 0.2s; background: #fff;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+          <td style="padding:12px 16px; font-weight:bold; color:#1e293b;">${App.escapeHtml(doc.nombre || 'Sin Nombre')}</td>
+          <td style="padding:12px 16px;">
+            <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; border: 1px solid #e2e8f0;">
+              ${App.escapeHtml(doc.tipo || 'PDF')}
+            </span>
+          </td>
+          <td style="padding:12px 16px; text-align:center;">${linkBadge}</td>
+          <td style="padding:12px 16px; text-align:center;">
+            <div style="display:flex; justify-content:center; gap:6px;">
+              <button class="btn-icon" style="background:#fff; border:1px solid #ddd;" title="Editar Metadata" onclick="window.ViewCurricula.abrirModalMetaDoc(${idx})">⚙️</button>
+              <button class="btn-icon" style="color:#d93025; background:#fff; border:1px solid #fad2cf;" title="Eliminar Archivo" onclick="window.ViewCurricula.eliminarDoc(${idx})">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+    });
+    cont.innerHTML = html + '</tbody></table>';
+  },
+
+  // Abrir el Sub-Modal para un documento específico
+  abrirModalMetaDoc: function(idx) {
+    this.docIndexEnEdicion = idx;
+    const doc = this.docsEnEdicion[idx];
+
+    document.getElementById('metaDocNombre').value = doc.nombre || '';
+    document.getElementById('metaDocTipo').value = doc.tipo || 'SÍLABO';
+    document.getElementById('metaDocLink').value = doc.link || '';
+
+    document.getElementById('modalMetaDocCurricula').style.display = 'flex';
+  },
+
+  // Guardar datos del Sub-Modal de vuelta a la RAM local
+  guardarMetaDocLocal: function() {
+    if (this.docIndexEnEdicion === null) return;
+    
+    const nombre = document.getElementById('metaDocNombre').value.trim();
+    if (!nombre) { alert("El nombre del archivo no puede estar vacío."); return; }
+
+    this.docsEnEdicion[this.docIndexEnEdicion] = {
+      nombre: nombre,
+      tipo: document.getElementById('metaDocTipo').value,
+      link: document.getElementById('metaDocLink').value.trim()
+    };
+
+    document.getElementById('modalMetaDocCurricula').style.display = 'none';
+    this.docIndexEnEdicion = null;
+    this.renderListaDocs(); // Refresca la tabla principal del modal
+  },
+
+  eliminarDoc: function(idx) {
+    if(!confirm("⚠️ ¿Está seguro de eliminar permanentemente este archivo de la lista?")) return;
+    this.docsEnEdicion.splice(idx, 1);
+    this.renderListaDocs();
+  },
+
+  // Persistir toda la lista de documentos en Sheets
+  guardarDocs: function() {
+    const btn = document.getElementById('btnGuardarDocsCurr');
+    btn.disabled = true; btn.textContent = '⏳ Guardando...';
+
+    // Limpieza final de vacíos por seguridad
+    const cleanDocs = this.docsEnEdicion.filter(d => d.nombre.trim() !== '');
+    this.currEnEdicion.documentos = JSON.stringify(cleanDocs);
+
+    google.script.run
+      .withSuccessHandler(() => {
+        btn.disabled = false; btn.textContent = '💾 Guardar Todos los Archivos';
+        document.getElementById('modalDocsCurricula').style.display = 'none';
+        this.actualizarEstadoUi('✅ Archivos actualizados correctamente.');
+      })
+      .withFailureHandler(e => { alert("Error: " + e.message); btn.disabled=false; btn.textContent='💾 Guardar Todos los Archivos'; })
+      .guardarCurriculaSPA(App.State.curricula);
+  }
+};
+</script>

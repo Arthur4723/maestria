@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('11_CSS'); ?>
+</head>
+<body>
+  <div class="layout">
+    
+    <div class="sidebar collapsed" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Maestría SPA</span>
+        <button class="toggle-btn" onclick="App.toggleSidebar()" title="Colapsar/Expandir Menú">☰</button>
+      </div>
+      
+      <div class="nav-section-title">ADMINISTRACIÓN</div>
+      <button class="nav-btn active" id="nav-curricula" onclick="App.Router.go('curricula', this)" title="Gestor de Curricula">
+        <i>📚</i> <span class="nav-text">Gestor de Curricula</span>
+      </button>
+
+      <div class="nav-section-title">OPERACIÓN</div>
+      <button class="nav-btn" id="nav-sesiones" onclick="App.Router.go('sesiones', this)" title="Gestor de Sesiones">
+        <i>📅</i> <span class="nav-text">Gestor de Sesiones</span>
+      </button>
+    </div>
+
+    <div class="content">
+      <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <h3 style="color:#1a73e8; margin:0;">Iniciando Gestor...</h3>
+        <p style="color:#666; font-size:12px;">Sincronizando base de datos en RAM</p>
+      </div>
+
+      <div id="view-curricula" class="view"><?!= include('13_View_Curricula'); ?></div>
+      <div id="view-sesiones" class="view"><?!= include('14_View_Sesiones'); ?></div>
+    </div>
+  </div>
+
+  <?!= include('12_JS'); ?>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<script>
+// 🚀 CORE SPA: RAM-First adaptado de tu código anterior
+window.App = {
+  State: { curricula: [], sesiones: [] },
+  
+  iniciar: function() {
+    console.log("Iniciando carga de backend...");
+    Promise.all([
+      this.fetchData('getCurriculaData'),
+      this.fetchData('getSesionesData')
+    ]).then(([curricula, sesiones]) => {
+      window.App.State.curricula = curricula;
+      window.App.State.sesiones = sesiones;
+      
+      document.getElementById('loader').style.display = 'none';
+      
+      // Forzar carga de primera vista
+      this.Router.go('curricula', document.getElementById('nav-curricula'));
+    }).catch(err => {
+      alert("Error crítico sincronizando datos: " + err);
+    });
+  },
+
+  // Helper Promisificado
+  fetchData: function(method) {
+    return new Promise((resolve, reject) => {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)[method]();
+    });
+  },
+
+  toggleSidebar: function() { 
+    document.getElementById('sidebar').classList.toggle('collapsed'); 
+  },
+  
+  escapeHtml: function(text) { 
+    return String(text == null ? '' : text).replace(/[&<>'"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[m])); 
+  },
+
+  // ROUTER ADAPTADO A TU LÓGICA
+  Router: {
+    go: function(vistaId, btnElement) {
+      // 1. Manejo visual del menú
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      if(btnElement) btnElement.classList.add('active');
+      const view = document.getElementById('view-' + vistaId);
+      if(view) view.classList.add('active');
+
+      // 2. Disparo de renderizado según la vista
+      if(vistaId === 'curricula' && window.ViewCurricula) window.ViewCurricula.render();
+      if(vistaId === 'sesiones' && window.ViewSesiones) window.ViewSesiones.render();
+    }
+  }
+};
+
+window.onload = () => window.App.iniciar();
+</script>

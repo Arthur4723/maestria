@@ -1,42 +1,39 @@
-/**
- * ARCHIVO: 01_menu.js
- */
+// =========================================================================
+// MÓDULO 01: MENÚ INSTITUCIONAL
+// =========================================================================
 
 function onOpen() {
-  ensureSheets_();
-
-  SpreadsheetApp.getUi()
-    .createMenu('Maestría SPA')
-    .addItem('Abrir aplicación', 'openApp')
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('🎓 Maestría SPA')
+    .addItem('🚀 Abrir Gestor', 'abrirSistemaGestor')
     .addSeparator()
-    .addItem('🧪 Abrir Master Tester E2E', 'abrirMasterTester')
-    .addSeparator()
-    .addItem('Inicializar hojas', 'ensureSheets_')
+    .addItem('⚙️ Tester del Sistema', 'abrirTesteador')
     .addToUi();
 }
 
-function openApp() {
-  const html = HtmlService
-    .createTemplateFromFile('03_app')
+/**
+ * Levanta la aplicación SPA en una ventana modal de gran tamaño
+ * como fue solicitado, evitando el Sidebar restrictivo.
+ */
+function abrirSistemaGestor() {
+  const html = HtmlService.createTemplateFromFile('10_App')
     .evaluate()
-    .setTitle(CONFIG.APP_TITLE)
-    .setWidth(1350)
+    .setTitle('Gestor de Maestría SPA')
+    .setWidth(1200)
     .setHeight(850);
-
-  SpreadsheetApp.getUi().showModalDialog(html, CONFIG.APP_TITLE);
+  
+  SpreadsheetApp.getUi().showModalDialog(html, 'Gestor de Maestría SPA');
 }
 
-function abrirMasterTester() {
-  const html = HtmlService
-    .createTemplateFromFile('99_tester')
+/**
+ * Ventana independiente para el Tester RAM-First
+ */
+function abrirTesteador() {
+  const html = HtmlService.createTemplateFromFile('99_Tester')
     .evaluate()
-    .setTitle('Master Tester E2E')
-    .setWidth(850)
-    .setHeight(650);
-
-  SpreadsheetApp.getUi().showModalDialog(html, 'Master Tester E2E - Maestría SPA');
-}
-
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+    .setTitle('Tester del Sistema')
+    .setWidth(1000)
+    .setHeight(700);
+  
+  SpreadsheetApp.getUi().showModalDialog(html, 'Auditoría RAM-First');
 }

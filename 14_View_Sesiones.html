@@ -1,0 +1,623 @@
+<div style="margin: -20px; padding: 16px 20px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background: #f4f7f6;">
+  
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-shrink: 0;">
+    <h2 style="margin:0; color:#2c3e50;">📅 Gestor de Sesiones y Materiales</h2>
+    <div id="estadoSesiones" class="panel-estado" style="margin:0;">Sistema listo.</div>
+  </div>
+
+  <div class="panel" style="flex-grow: 1; display: flex; flex-direction: column; margin: 0; padding: 12px; min-height: 0; border: 1px solid var(--color-borde); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    
+    <div class="filter-bar" style="flex-shrink: 0; margin-bottom: 12px; display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap;">
+      <select id="selCursoFiltro" onchange="window.ViewSesiones.filtrar(this.value)" style="flex-grow: 1; padding: 8px; border: 1px solid #1a73e8; border-radius: 4px; font-weight: bold; color: #1a73e8; outline: none; cursor: pointer; min-width: 250px;">
+        </select>
+      <button class="btn-sec" id="btnMostrarInactivosSes" onclick="window.ViewSesiones.toggleInactivos()">👀 Mostrar Todos</button>
+      <button class="btn-sec" onclick="window.ViewSesiones.regresarCurricula()">🔙 Regresar</button>
+      <button class="btn-sec" onclick="App.iniciar()">🔄 Actualizar BD</button>
+      
+      <div style="display:flex; border: 1px solid var(--color-exito); border-radius: 6px; overflow:hidden;">
+        <select id="selTipoNuevo" style="border:none; outline:none; padding:8px 12px; background:#f4fce8; font-weight:bold; color:#137333; cursor:pointer;">
+          <option value="Día">Día</option>
+          <option value="Tarea">Tarea</option>
+          <option value="Examen">Examen</option>
+          <option value="Exposición">Exposición</option>
+        </select>
+        <button class="btn-ok" id="btnNuevaSesion" onclick="window.ViewSesiones.abrirModalMetadatos(null)" style="border-radius:0; border-left:1px solid #137333;">➕ Nuevo</button>
+      </div>
+    </div>
+    
+    <div id="tablaSesionesContainer" style="flex-grow: 1; overflow: auto; border: 1px solid #c2d7fa; border-radius: 6px; background: #fff; position: relative;">
+    </div>
+  </div>
+</div>
+
+<div id="modalMetaSesiones" class="modal-overlay">
+  <div class="modal-box strict-modal" style="width: 500px;">
+    <div class="modal-header">
+      <h3 style="margin:0; color:var(--color-primario);">⚙️ Configuración de la Actividad</h3>
+      <div style="font-size:11px; color:#666; margin-top:4px;">ID: <b id="lblMetaSesId" style="background:#eee; padding:2px 4px; border-radius:4px;">Nuevo</b></div>
+    </div>
+    
+    <div class="strict-scrollable">
+      <div class="input-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="input-group" style="grid-column: span 2;">
+          <label>Nombre de la Sesión / Actividad</label>
+          <input type="text" id="metaSesNombre" placeholder="Ej: Clase 1: Introducción">
+        </div>
+        <div class="input-group">
+          <label>Tipo</label>
+          <select id="metaSesTipo">
+            <option value="Día">Día</option>
+            <option value="Tarea">Tarea</option>
+            <option value="Examen">Examen</option>
+            <option value="Exposición">Exposición</option>
+          </select>
+        </div>
+        <div class="input-group"><label>Orden Visual</label><input type="number" id="metaSesOrden" placeholder="1"></div>
+        <div class="input-group"><label>Fecha Programada</label><input type="date" id="metaSesFecha"></div>
+      </div>
+
+      <div class="input-grid" style="grid-template-columns: 1fr; margin-top:12px;">
+        <div class="input-group" id="grpGrabacion">
+          <label>Enlace de Grabación de la Clase</label>
+          <input type="url" id="metaSesGrabacion" placeholder="https://zoom.us/rec/..." style="border-color: #fbbc04;">
+        </div>
+        <div class="input-group">
+          <label>Asistente IA Específico (Opcional)</label>
+          <input type="url" id="metaSesIA" placeholder="https://chatgpt.com/g/..." style="border-color: #a855f7;">
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="document.getElementById('modalMetaSesiones').style.display='none'">Cancelar</button>
+      <button id="btnGuardarMetaSes" class="btn-ok" onclick="window.ViewSesiones.guardarMetadatos()">💾 Guardar Sesión</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalDocsSesiones" class="modal-overlay">
+  <div class="modal-box strict-modal" style="width: 800px;">
+    <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+      <h3 style="margin:0; color:var(--color-primario);">📁 Materiales de la Sesión</h3>
+      <div style="font-size:11px; color:#666; margin-top:4px;">Actividad: <b id="lblDocsSesNombre"></b></div>
+    </div>
+    
+    <div style="padding: 16px 24px; border-bottom: 1px solid #eee; background: #f8fafc;">
+       <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 11px; font-weight: bold; color: #5f6368; text-transform: uppercase;">1. Vista y Carpeta Destino:</span>
+          <select id="selCarpetaDocsSesiones" onchange="window.ViewSesiones.renderListaDocs()" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold;">
+            <option value="DOCUMENTOS">📁 DOCUMENTOS (Interno)</option>
+            <option value="PUBLICACIONES">📢 PUBLICACIONES (Compartido)</option>
+          </select>
+       </div>
+       
+       <div id="grupoBotonesDocsSesiones" style="display: flex; gap: 8px; align-items: center;">
+           <span style="font-size: 11px; font-weight: bold; color: #5f6368; text-transform: uppercase; width: 140px;">2. ➕ Crear Archivo:</span>
+           <button class="btn-sec" onclick="window.ViewSesiones.crearDocDrive('LINK')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">🔗 Link Web</button>
+           <button class="btn-sec" onclick="window.ViewSesiones.crearDocDrive('DOC')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">📄 Documento</button>
+           <button class="btn-sec" onclick="window.ViewSesiones.crearDocDrive('SHEET')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">📊 Sheet Excel</button>
+           <button class="btn-sec" onclick="window.ViewSesiones.crearDocDrive('SLIDE')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">📽️ Diapositiva</button>
+       </div>
+    </div>
+    
+    <div class="strict-scrollable" id="listaDocsSesContenedor" style="padding: 0;">
+      </div>
+    
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="document.getElementById('modalDocsSesiones').style.display='none'">Cerrar sin Guardar</button>
+      <button id="btnGuardarDocsSes" class="btn-ok" onclick="window.ViewSesiones.guardarDocs()">💾 Guardar Lote de Materiales</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalMetaDocSesiones" class="modal-overlay" style="z-index: 2100; background: rgba(0,0,0,0.7);">
+  <div class="modal-box" style="width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+    <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+      <h3 style="margin:0; color:var(--color-primario);">⚙️ Propiedades del Material</h3>
+      <div id="lblMetaDocUbicacion" style="font-size:10px; font-weight:bold; margin-top:8px; display:inline-block; padding:2px 8px; border-radius:4px;"></div>
+    </div>
+    
+    <div class="input-grid" style="grid-template-columns: 1fr; margin-top: 16px;">
+      <div class="input-group">
+        <label>Nombre / Etiqueta Pública</label>
+        <input type="text" id="metaDocSesNombre" placeholder="Ej: Lectura Obligatoria">
+      </div>
+      
+      <div class="input-group">
+        <label>Formato / Tipo (No Editable)</label>
+        <select id="metaDocSesTipo" disabled style="background-color: #f1f5f9; cursor: not-allowed; color: #64748b; font-weight: bold;">
+          <option value="LINK">🔗 Link Web</option>
+          <option value="DOC">📄 Documento Word/Docs</option>
+          <option value="SHEET">📊 Hoja de Cálculo</option>
+          <option value="SLIDE">📽️ Presentación/Diapositiva</option>
+          <option value="VIDEO">📼 Video / Grabación</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label id="lblMetaDocLink">Enlace de Archivo</label>
+        <input type="url" id="metaDocSesLink" placeholder="https://...">
+      </div>
+    </div>
+
+    <div class="modal-footer" style="margin-top: 24px;">
+      <button class="btn-sec" onclick="document.getElementById('modalMetaDocSesiones').style.display='none'">Cancelar</button>
+      <button class="btn-pri" onclick="window.ViewSesiones.guardarMetaDocLocal()">✔️ Aplicar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<script>
+window.ViewSesiones = {
+  selectedCurriculaId: null,
+  mostrarInactivos: false,
+  sesionEnEdicion: null,
+  docsEnEdicion: [],
+  docIndexEnEdicion: null,
+
+  render: function() {
+    const selector = document.getElementById('selCursoFiltro');
+    let optionsHTML = '<option value="">-- Seleccione un Curso para ver sus Sesiones --</option>';
+    App.State.curricula.forEach(c => {
+      optionsHTML += `<option value="${c.id_curricula}" ${this.selectedCurriculaId === c.id_curricula ? 'selected' : ''}>${App.escapeHtml(c.nombre)}</option>`;
+    });
+    selector.innerHTML = optionsHTML;
+    this.filtrar(this.selectedCurriculaId);
+  },
+
+  actualizarEstadoUi: function(msg) {
+    document.getElementById('estadoSesiones').textContent = msg;
+  },
+
+  regresarCurricula: function() {
+    App.Router.go('curricula', document.getElementById('nav-curricula'));
+  },
+
+  toggleInactivos: function() {
+    this.mostrarInactivos = !this.mostrarInactivos;
+    document.getElementById('btnMostrarInactivosSes').innerHTML = this.mostrarInactivos ? '🙈 Ocultar Inactivos' : '👀 Mostrar Todos';
+    this.filtrar(this.selectedCurriculaId);
+  },
+
+  // 1. RENDER TABLA DE SESIONES
+  filtrar: function(id) {
+    this.selectedCurriculaId = id;
+    const selector = document.getElementById('selCursoFiltro');
+    if (selector && selector.value !== id) selector.value = id;
+
+    const container = document.getElementById('tablaSesionesContainer');
+    const btnNuevo = document.getElementById('btnNuevaSesion');
+    const selTipo = document.getElementById('selTipoNuevo');
+
+    if (!id) {
+      btnNuevo.disabled = true; btnNuevo.style.opacity = '0.6';
+      selTipo.disabled = true; selTipo.style.opacity = '0.6';
+      container.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b; font-size: 14px;">Seleccione un curso en la barra superior para gestionar sus sesiones.</div>';
+      return;
+    }
+
+    btnNuevo.disabled = false; btnNuevo.style.opacity = '1';
+    selTipo.disabled = false; selTipo.style.opacity = '1';
+
+    let filtrados = App.State.sesiones
+      .filter(s => s.id_curricula === id)
+      .filter(s => this.mostrarInactivos || s.estado !== 'INACTIVO')
+      .sort((a,b) => {
+        let mA = {}, mB = {};
+        try { mA = JSON.parse(a.meta_json||'{}'); mB = JSON.parse(b.meta_json||'{}'); } catch(e){}
+        return (parseInt(mA.orden) || 99) - (parseInt(mB.orden) || 99);
+      });
+
+    if (filtrados.length === 0) {
+      container.innerHTML = '<div style="padding:40px; text-align:center; color:#64748b;">Este curso no tiene sesiones. Utiliza "+ Nuevo" para crear una.</div>';
+      return;
+    }
+
+    let html = `<table style="width: 100%; border-collapse: collapse; text-align: left; font-size:12px;">
+      <thead style="position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <tr style="background: #f1f5f9; color: #334155; border-bottom: 2px solid #cbd5e1;">
+          <th style="width:60px; text-align:center; padding:12px 10px;">Orden</th>
+          <th style="padding:12px 10px;">Detalle de la Sesión</th>
+          <th style="width:100px; text-align:center; padding:12px 10px;">Estado</th>
+          <th style="width:200px; text-align:center; padding:12px 10px;">Acciones Operativas</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    filtrados.forEach(sesion => {
+      let meta = {}; try { meta = JSON.parse(sesion.meta_json || '{}'); } catch(e){}
+      
+      const isActivo = sesion.estado !== 'INACTIVO';
+      const rowStyle = isActivo ? 'background: #fff;' : 'background: #f8fafc; opacity: 0.6;';
+      const badgeEstado = isActivo 
+        ? `<span style="padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; background:#dcfce3; color:#166534;">ACTIVO</span>`
+        : `<span style="padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; background:#fee2e2; color:#b91c1c;">INACTIVO</span>`;
+
+      const btnEstado = isActivo
+        ? `<button class="btn-icon" style="color:#64748b;" title="Ocultar Sesión" onclick="window.ViewSesiones.cambiarEstado('${sesion.id_sesion}', 'INACTIVO')">👁️‍🗨️</button>`
+        : `<button class="btn-icon" style="color:#16a34a;" title="Activar Sesión" onclick="window.ViewSesiones.cambiarEstado('${sesion.id_sesion}', 'ACTIVO')">🟢</button>`;
+
+      const btnIA = meta.chat_ia 
+        ? `<a href="${App.escapeHtml(meta.chat_ia)}" target="_blank" class="btn-icon" style="text-decoration:none;" title="Asistente IA de Sesión">🤖</a>`
+        : `<button class="btn-icon" style="opacity:0.2; cursor:not-allowed;" title="Sin IA vinculada">🤖</button>`;
+
+      let btnGrabacion = '';
+      if (meta.tipo === 'Día') {
+        btnGrabacion = meta.grabacion
+          ? `<a href="${App.escapeHtml(meta.grabacion)}" target="_blank" class="btn-icon" style="text-decoration:none;" title="Ver Grabación de la Clase">📼</a>`
+          : `<button class="btn-icon" style="opacity:0.2; cursor:not-allowed;" title="Sin Grabación (Editar en Metadatos ⚙️)">📼</button>`;
+      }
+
+      const colorTipo = meta.tipo === 'Tarea' ? '#d97706' : (meta.tipo === 'Examen' ? '#dc2626' : '#2563eb');
+
+      html += `
+        <tr style="border-bottom: 1px solid #e2e8f0; ${rowStyle} transition: 0.2s;">
+          <td style="padding:12px 10px; text-align:center; font-weight:bold; color:#1a73e8; font-size: 15px;">${meta.orden || '-'}</td>
+          <td style="padding:12px 10px;">
+            <div style="font-weight:bold; color:#1e293b; font-size: 13px;">${App.escapeHtml(sesion.nombre)}</div>
+            <div style="font-size:11px; margin-top:4px; font-weight:bold; color:${colorTipo};">
+               ${App.escapeHtml(meta.tipo || 'Día')} <span style="color:#94a3b8; font-weight:normal; margin-left:6px;">📅 ${App.escapeHtml(meta.fecha || 'Sin fecha')}</span>
+            </div>
+          </td>
+          <td style="padding:12px 10px; text-align:center;">${badgeEstado}</td>
+          <td style="padding:12px 10px; text-align:center;">
+            <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
+              <button class="btn-icon" title="Editar Metadatos" onclick="window.ViewSesiones.abrirModalMetadatos('${sesion.id_sesion}')">⚙️</button>
+              <button class="btn-icon" title="Gestionar Materiales" onclick="window.ViewSesiones.abrirModalDocs('${sesion.id_sesion}')">📁</button>
+              <span style="border-left: 1px solid #ddd; height: 16px; display:inline-block; margin: 0 2px;"></span>
+              ${btnGrabacion}
+              ${btnIA}
+              <span style="border-left: 1px solid #ddd; height: 16px; display:inline-block; margin: 0 2px;"></span>
+              ${btnEstado}
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+    container.innerHTML = html + '</tbody></table>';
+  },
+
+  cambiarEstado: function(id, nuevoEstado) {
+    if(!confirm(`¿Deseas marcar esta sesión como ${nuevoEstado}?`)) return;
+    this.actualizarEstadoUi('Actualizando estado...');
+    const idx = App.State.sesiones.findIndex(s => s.id_sesion === id);
+    if(idx > -1) App.State.sesiones[idx].estado = nuevoEstado;
+    this.filtrar(this.selectedCurriculaId);
+    google.script.run
+      .withSuccessHandler(() => this.actualizarEstadoUi('Estado actualizado.'))
+      .withFailureHandler(e => alert("Error: " + e.message))
+      .guardarSesionesSPA(App.State.sesiones);
+  },
+
+  // =========================================================================
+  // 3. EDITOR DE METADATOS DE SESIÓN
+  // =========================================================================
+  abrirModalMetadatos: function(id) {
+    if (!id) {
+      const tipoRapido = document.getElementById('selTipoNuevo').value;
+      this.sesionEnEdicion = {
+        id_sesion: 'NEW', id_curricula: this.selectedCurriculaId, nombre: `Nuevo/a ${tipoRapido}`,
+        estado: 'ACTIVO', meta_json: JSON.stringify({ tipo: tipoRapido, orden: '', fecha: '' }), documentos: '[]'
+      };
+      document.getElementById('lblMetaSesId').textContent = 'Nuevo Registro';
+    } else {
+      this.sesionEnEdicion = JSON.parse(JSON.stringify(App.State.sesiones.find(s => s.id_sesion === id)));
+      document.getElementById('lblMetaSesId').textContent = id;
+    }
+
+    let meta = {}; try { meta = JSON.parse(this.sesionEnEdicion.meta_json || '{}'); } catch(e){}
+
+    document.getElementById('metaSesNombre').value = this.sesionEnEdicion.nombre || '';
+    document.getElementById('metaSesTipo').value = meta.tipo || 'Día';
+    document.getElementById('metaSesOrden').value = meta.orden || '';
+    document.getElementById('metaSesFecha').value = meta.fecha || '';
+    document.getElementById('metaSesIA').value = meta.chat_ia || '';
+    document.getElementById('metaSesGrabacion').value = meta.grabacion || '';
+
+    const tipoSelect = document.getElementById('metaSesTipo');
+    const grpGrabacion = document.getElementById('grpGrabacion');
+    const toggleGrabacion = () => { grpGrabacion.style.display = tipoSelect.value === 'Día' ? 'block' : 'none'; };
+    tipoSelect.onchange = toggleGrabacion;
+    toggleGrabacion();
+
+    document.getElementById('modalMetaSesiones').style.display = 'flex';
+  },
+
+  guardarMetadatos: function() {
+    const btn = document.getElementById('btnGuardarMetaSes');
+    btn.disabled = true; btn.textContent = '⏳ Guardando...';
+
+    this.sesionEnEdicion.nombre = document.getElementById('metaSesNombre').value.trim() || 'Sin Nombre';
+    let meta = {}; try { meta = JSON.parse(this.sesionEnEdicion.meta_json || '{}'); } catch(e){}
+    meta.tipo = document.getElementById('metaSesTipo').value;
+    meta.orden = parseInt(document.getElementById('metaSesOrden').value) || 0;
+    meta.fecha = document.getElementById('metaSesFecha').value;
+    meta.chat_ia = document.getElementById('metaSesIA').value.trim();
+    
+    if (meta.tipo === 'Día') meta.grabacion = document.getElementById('metaSesGrabacion').value.trim();
+    else meta.grabacion = "";
+    
+    this.sesionEnEdicion.meta_json = JSON.stringify(meta);
+
+    if (this.sesionEnEdicion.id_sesion === 'NEW') {
+      this.sesionEnEdicion.id_sesion = 'SES_' + new Date().getTime();
+      App.State.sesiones.push(this.sesionEnEdicion);
+    } else {
+      const idx = App.State.sesiones.findIndex(s => s.id_sesion === this.sesionEnEdicion.id_sesion);
+      if(idx > -1) App.State.sesiones[idx] = this.sesionEnEdicion;
+    }
+
+    google.script.run
+      .withSuccessHandler(() => {
+        btn.disabled = false; btn.textContent = '💾 Guardar Sesión';
+        document.getElementById('modalMetaSesiones').style.display = 'none';
+        this.filtrar(this.selectedCurriculaId); 
+        this.actualizarEstadoUi('✅ Sesión guardada con éxito.');
+      })
+      .withFailureHandler(e => { alert("Error: " + e.message); btn.disabled = false; btn.textContent = '💾 Guardar Sesión'; })
+      .guardarSesionesSPA(App.State.sesiones);
+  },
+
+  // =========================================================================
+  // 4. GESTIÓN DE DOCUMENTOS CON DRIVE
+  // =========================================================================
+  abrirModalDocs: function(id) {
+    this.sesionEnEdicion = App.State.sesiones.find(s => s.id_sesion === id);
+    if(!this.sesionEnEdicion) return;
+
+    document.getElementById('lblDocsSesNombre').textContent = this.sesionEnEdicion.nombre;
+    
+    try { 
+      this.docsEnEdicion = JSON.parse(this.sesionEnEdicion.documentos || '[]'); 
+      if(!Array.isArray(this.docsEnEdicion)) this.docsEnEdicion = [];
+    } catch(e){ this.docsEnEdicion = []; }
+
+    this.renderListaDocs();
+    document.getElementById('modalDocsSesiones').style.display = 'flex';
+  },
+
+  crearDocDrive: function(tipoSeleccionado) {
+    let nombreBase = "Nuevo Recurso";
+    if (tipoSeleccionado === 'DOC') nombreBase = "Nuevo Doc";
+    else if (tipoSeleccionado === 'SHEET') nombreBase = "Nuevo Sheet";
+    else if (tipoSeleccionado === 'SLIDE') nombreBase = "Nuevo Slide";
+    else if (tipoSeleccionado === 'LINK') nombreBase = "Nuevo Link";
+
+    const destinoCarpeta = document.getElementById('selCarpetaDocsSesiones').value;
+
+    if (tipoSeleccionado === 'LINK') {
+      // Agregamos el parámetro 'carpeta'
+      this.docsEnEdicion.push({ nombre: nombreBase, tipo: 'LINK', link: '', carpeta: destinoCarpeta });
+      this.renderListaDocs();
+      return;
+    }
+
+    const btnGroup = document.getElementById('grupoBotonesDocsSesiones');
+    const nombreSesion = this.sesionEnEdicion.nombre || "SIN SESION";
+    const currObj = App.State.curricula.find(c => c.id_curricula === this.selectedCurriculaId);
+    const nombreCurricula = currObj ? currObj.nombre : "CURSO";
+
+    btnGroup.style.opacity = '0.4'; btnGroup.style.pointerEvents = 'none';
+    this.actualizarEstadoUi(`⏳ Generando archivo ${tipoSeleccionado} en Drive...`);
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        btnGroup.style.opacity = '1'; btnGroup.style.pointerEvents = 'auto';
+        if (res.status === 'success') {
+          this.actualizarEstadoUi('✅ Archivo creado exitosamente.');
+          // 🚀 Inyectamos el parámetro 'carpeta' en la RAM
+          this.docsEnEdicion.push({ 
+            nombre: res.nombre, 
+            tipo: tipoSeleccionado, 
+            link: res.url, 
+            carpeta: destinoCarpeta 
+          });
+          this.renderListaDocs();
+        } else { alert("Error: " + res.message); }
+      })
+      .crearArchivoEnDriveSPA(tipoSeleccionado, destinoCarpeta, nombreBase, nombreSesion, nombreCurricula);
+  },
+
+  // 🚀 TABLA DE SOLO LECTURA ESTILO CURRÍCULA
+  renderListaDocs: function() {
+    const cont = document.getElementById('listaDocsSesContenedor');
+    // Capturamos qué carpeta se está viendo actualmente en el selector
+    const filtroCarpeta = document.getElementById('selCarpetaDocsSesiones').value;
+
+    if (this.docsEnEdicion.length === 0) {
+      cont.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">No hay materiales vinculados a esta sesión. Utilice los botones superiores para crear uno.</div>';
+      return;
+    }
+
+    let html = `<table style="width:100%; border-collapse:collapse; font-size:12px; border-top: 1px solid #eee;">
+      <thead>
+        <tr style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
+          <th style="padding:12px 16px;">Nombre del Material</th>
+          <th style="padding:12px 16px; width:140px;">Formato</th>
+          <th style="padding:12px 16px; text-align:center; width:80px;">Enlace</th>
+          <th style="padding:12px 16px; text-align:center; width:120px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    let docsMostrados = 0;
+
+    this.docsEnEdicion.forEach((doc, idx) => {
+      // 1. Determinar a qué carpeta pertenece el documento (Por defecto DOCUMENTOS si es antiguo)
+      const estadoCarpeta = doc.carpeta || 'DOCUMENTOS';
+      
+      // 2. 🚀 LÓGICA DE FILTRO: Si no coincide con lo que el usuario quiere ver, lo ignoramos visualmente
+      if (estadoCarpeta !== filtroCarpeta) return;
+
+      docsMostrados++; // Contamos cuántos pasan el filtro
+
+      let icono = '📄';
+      if(doc.tipo === 'LINK') icono = '🔗';
+      if(doc.tipo === 'SHEET') icono = '📊';
+      if(doc.tipo === 'SLIDE') icono = '📽️';
+      if(doc.tipo === 'VIDEO') icono = '📼';
+
+      const linkBadge = doc.link 
+        ? `<a href="${App.escapeHtml(doc.link)}" target="_blank" style="color:#2563eb; text-decoration:none; font-weight:bold; padding:4px 8px; background:#eff6ff; border-radius:4px;">Ver ↗</a>`
+        : `<span style="color:#94a3b8; font-size:11px;">Sin Enlace</span>`;
+
+      const badgeCarpeta = estadoCarpeta === 'PUBLICACIONES'
+        ? `<span style="background:#e0e7ff; color:#1d4ed8; padding:2px 6px; border-radius:4px; font-size:9px; border:1px solid #bfdbfe;">📢 COMPARTIDO</span>`
+        : `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-size:9px; border:1px solid #e2e8f0;">🔒 INTERNO</span>`;
+
+      html += `
+        <tr style="border-bottom:1px solid #eee; transition: 0.2s; background: #fff;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+          
+          <td style="padding:12px 16px;">
+            <div style="font-weight:bold; color:#1e293b; font-size:13px;">${App.escapeHtml(doc.nombre || 'Sin Nombre')}</div>
+            <div style="margin-top: 4px;">${badgeCarpeta}</div>
+          </td>
+          
+          <td style="padding:12px 16px;">
+            <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; border: 1px solid #e2e8f0; display:inline-block;">
+              ${icono} ${App.escapeHtml(doc.tipo || 'DOC')}
+            </span>
+          </td>
+          
+          <td style="padding:12px 16px; text-align:center;">${linkBadge}</td>
+          
+          <td style="padding:12px 16px; text-align:center;">
+            <div style="display:flex; justify-content:center; gap:6px;">
+              <button class="btn-icon" style="background:#fff; border:1px solid #ddd;" title="Editar Metadatos" onclick="window.ViewSesiones.abrirModalMetaDoc(${idx})">⚙️</button>
+              <button class="btn-icon" style="color:#d93025; background:#fff; border:1px solid #fad2cf;" title="Eliminar Archivo" onclick="window.ViewSesiones.eliminarDoc(${idx})">🗑️</button>
+            </div>
+          </td>
+          
+        </tr>`;
+    });
+
+    // 3. Mensaje si no hay documentos en la pestaña seleccionada
+    if (docsMostrados === 0) {
+      let nombreVista = filtroCarpeta === 'PUBLICACIONES' ? '📢 COMPARTIDO' : '🔒 INTERNO';
+      html += `<tr><td colspan="4" style="padding:40px; text-align:center; color:#888;">No hay materiales registrados en la vista <b>${nombreVista}</b>.</td></tr>`;
+    }
+
+    cont.innerHTML = html + '</tbody></table>';
+  },
+
+  // 🚀 SUB-MODAL Y LÓGICA DE EDICIÓN / ELIMINACIÓN
+  abrirModalMetaDoc: function(idx) {
+    this.docIndexEnEdicion = idx;
+    const doc = this.docsEnEdicion[idx];
+    
+    document.getElementById('metaDocSesNombre').value = doc.nombre || '';
+    document.getElementById('metaDocSesTipo').value = doc.tipo || 'DOC';
+    
+    // Indicador visual en el Header del modal
+    const lblUbicacion = document.getElementById('lblMetaDocUbicacion');
+    const estadoCarpeta = doc.carpeta || 'DOCUMENTOS';
+    if (estadoCarpeta === 'PUBLICACIONES') {
+        lblUbicacion.innerText = "📢 Acceso: PÚBLICO / COMPARTIDO";
+        lblUbicacion.style.backgroundColor = "#e0e7ff";
+        lblUbicacion.style.color = "#1d4ed8";
+    } else {
+        lblUbicacion.innerText = "🔒 Acceso: PRIVADO / INTERNO";
+        lblUbicacion.style.backgroundColor = "#f1f5f9";
+        lblUbicacion.style.color = "#475569";
+    }
+    
+    const inputLink = document.getElementById('metaDocSesLink');
+    const labelLink = document.getElementById('lblMetaDocLink');
+    inputLink.value = doc.link || '';
+
+    if (doc.tipo !== 'LINK') {
+        inputLink.disabled = true;
+        inputLink.style.backgroundColor = '#f1f5f9';
+        inputLink.style.cursor = 'not-allowed';
+        inputLink.style.color = '#64748b';
+        labelLink.innerText = 'Enlace de Drive (Bloqueado por seguridad)';
+    } else {
+        inputLink.disabled = false;
+        inputLink.style.backgroundColor = '#fff';
+        inputLink.style.cursor = 'text';
+        inputLink.style.color = '#222';
+        labelLink.innerText = 'Enlace Externo (Web)';
+    }
+
+    document.getElementById('modalMetaDocSesiones').style.display = 'flex';
+  },
+
+  guardarMetaDocLocal: function() {
+    if (this.docIndexEnEdicion === null) return;
+    
+    const nombreNuevoBase = document.getElementById('metaDocSesNombre').value.trim();
+    if (!nombreNuevoBase) { alert("⚠️ El nombre no puede estar vacío."); return; }
+
+    const doc = this.docsEnEdicion[this.docIndexEnEdicion];
+    const nombreAntiguoBase = doc.nombre;
+    const isDriveLink = doc.link && (doc.link.includes('drive.google.com') || doc.link.includes('docs.google.com'));
+
+    // 1. Actualizar memoria RAM local (Etiqueta corta)
+    doc.nombre = nombreNuevoBase;
+    if (doc.tipo === 'LINK') {
+        doc.link = document.getElementById('metaDocSesLink').value.trim();
+    }
+
+    // 2. Sincronización Estructurada con Drive
+    if (isDriveLink && nombreNuevoBase !== nombreAntiguoBase) {
+        const nombreSesion = this.sesionEnEdicion.nombre || "SESION";
+        const currObj = App.State.curricula.find(c => c.id_curricula === this.selectedCurriculaId);
+        const nombreCurricula = currObj ? currObj.nombre : "CURSO";
+        
+        // Estructura: etiqueta - SESION - CURRICULA (Mayúsculas forzadas)
+        const nombreCompletoDrive = `${nombreNuevoBase} - ${nombreSesion.toUpperCase()} - ${nombreCurricula.toUpperCase()}`;
+
+        this.actualizarEstadoUi('🔄 Sincronizando nombre en Drive...');
+        google.script.run
+            .withSuccessHandler((res) => {
+                if (res.status === 'success') this.actualizarEstadoUi('✅ Sincronización completa.');
+            })
+            .renombrarArchivoEnDriveSPA(doc.link, nombreCompletoDrive);
+    }
+
+    document.getElementById('modalMetaDocSesiones').style.display = 'none';
+    this.docIndexEnEdicion = null;
+    this.renderListaDocs(); 
+  },
+
+  eliminarDoc: function(idx) {
+    if(!confirm("⚠️ ¿Está seguro de eliminar este material? Si es un archivo generado por el sistema en Drive, también será enviado a la papelera permanentemente.")) return;
+    
+    const docABorrar = this.docsEnEdicion[idx];
+    const link = docABorrar.link || '';
+    
+    // Eliminación Optimista
+    this.docsEnEdicion.splice(idx, 1);
+    this.renderListaDocs();
+
+    // Eliminar en Drive si corresponde
+    if (link.includes('drive.google.com') || link.includes('docs.google.com')) {
+       this.actualizarEstadoUi('🗑️ Enviando archivo a Papelera de Drive...');
+       google.script.run
+         .withSuccessHandler((res) => {
+            if(res.status === 'success') this.actualizarEstadoUi('✅ Archivo enviado a la papelera.');
+            else this.actualizarEstadoUi('⚠️ Material quitado de la lista (No se pudo eliminar de Drive).');
+         })
+         .withFailureHandler(() => this.actualizarEstadoUi('⚠️ Fallo de red al borrar en Drive.'))
+         .eliminarArchivoDeDriveSPA(link);
+    }
+  },
+
+  guardarDocs: function() {
+    const btn = document.getElementById('btnGuardarDocsSes');
+    btn.disabled = true; btn.textContent = '⏳ Guardando...';
+
+    const cleanDocs = this.docsEnEdicion.filter(d => d.nombre.trim() !== '');
+    this.sesionEnEdicion.documentos = JSON.stringify(cleanDocs);
+
+    google.script.run
+      .withSuccessHandler(() => {
+        btn.disabled = false; btn.textContent = '💾 Guardar Lote de Materiales';
+        document.getElementById('modalDocsSesiones').style.display = 'none';
+        this.actualizarEstadoUi('✅ Materiales actualizados correctamente.');
+      })
+      .withFailureHandler(e => { alert("Error: " + e.message); btn.disabled=false; btn.textContent='💾 Guardar Lote de Materiales'; })
+      .guardarSesionesSPA(App.State.sesiones);
+  }
+};
+</script>
