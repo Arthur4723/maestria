@@ -57,10 +57,17 @@
       </div>
 
       <div class="input-grid" style="grid-template-columns: 1fr; margin-top:12px;">
-        <div class="input-group" id="grpGrabacion">
-          <label>Enlace de Grabación de la Clase</label>
+        
+        <div class="input-group" id="grpEntrega" style="display:none;">
+          <label>Link de Plataforma de Entrega (Solo para "Tarea")</label>
+          <input type="url" id="metaSesEntrega" placeholder="https://moodle.uni.edu.pe/..." style="border-color: #1a73e8;">
+        </div>
+
+        <div class="input-group" id="grpGrabacion" style="display:none;">
+          <label>Enlace de Grabación de la Clase (Solo para "Día")</label>
           <input type="url" id="metaSesGrabacion" placeholder="https://zoom.us/rec/..." style="border-color: #fbbc04;">
         </div>
+
         <div class="input-group">
           <label>Asistente IA Específico (Opcional)</label>
           <input type="url" id="metaSesIA" placeholder="https://chatgpt.com/g/..." style="border-color: #a855f7;">
@@ -182,6 +189,7 @@ window.ViewSesiones = {
   // 1. RENDER TABLA DE SESIONES
   filtrar: function(id) {
     this.selectedCurriculaId = id;
+    
     const selector = document.getElementById('selCursoFiltro');
     if (selector && selector.value !== id) selector.value = id;
 
@@ -219,7 +227,7 @@ window.ViewSesiones = {
           <th style="width:60px; text-align:center; padding:12px 10px;">Orden</th>
           <th style="padding:12px 10px;">Detalle de la Sesión</th>
           <th style="width:100px; text-align:center; padding:12px 10px;">Estado</th>
-          <th style="width:200px; text-align:center; padding:12px 10px;">Acciones Operativas</th>
+          <th style="width:240px; text-align:center; padding:12px 10px;">Acciones Operativas</th>
         </tr>
       </thead>
       <tbody>`;
@@ -234,7 +242,7 @@ window.ViewSesiones = {
         : `<span style="padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; background:#fee2e2; color:#b91c1c;">INACTIVO</span>`;
 
       const btnEstado = isActivo
-        ? `<button class="btn-icon" style="color:#64748b;" title="Ocultar Sesión" onclick="window.ViewSesiones.cambiarEstado('${sesion.id_sesion}', 'INACTIVO')">👁️‍🗨️</button>`
+        ? `<button class="btn-icon" style="color:#64748b;" title="Ocultar/Desactivar Sesión" onclick="window.ViewSesiones.cambiarEstado('${sesion.id_sesion}', 'INACTIVO')">👁️‍🗨️</button>`
         : `<button class="btn-icon" style="color:#16a34a;" title="Activar Sesión" onclick="window.ViewSesiones.cambiarEstado('${sesion.id_sesion}', 'ACTIVO')">🟢</button>`;
 
       const btnIA = meta.chat_ia 
@@ -246,6 +254,14 @@ window.ViewSesiones = {
         btnGrabacion = meta.grabacion
           ? `<a href="${App.escapeHtml(meta.grabacion)}" target="_blank" class="btn-icon" style="text-decoration:none;" title="Ver Grabación de la Clase">📼</a>`
           : `<button class="btn-icon" style="opacity:0.2; cursor:not-allowed;" title="Sin Grabación (Editar en Metadatos ⚙️)">📼</button>`;
+      }
+
+      // 🚀 Icono de Entrega Exclusivo para Tareas
+      let btnEntrega = '';
+      if (meta.tipo === 'Tarea') {
+        btnEntrega = meta.link_entrega
+          ? `<a href="${App.escapeHtml(meta.link_entrega)}" target="_blank" class="btn-icon" style="text-decoration:none;" title="Ir a plataforma de entrega">📤</a>`
+          : `<button class="btn-icon" style="opacity:0.2; cursor:not-allowed;" title="Sin Link de Entrega (Editar en Metadatos ⚙️)">📤</button>`;
       }
 
       const colorTipo = meta.tipo === 'Tarea' ? '#d97706' : (meta.tipo === 'Examen' ? '#dc2626' : '#2563eb');
@@ -264,9 +280,13 @@ window.ViewSesiones = {
             <div style="display:flex; gap:8px; justify-content:center; align-items:center;">
               <button class="btn-icon" title="Editar Metadatos" onclick="window.ViewSesiones.abrirModalMetadatos('${sesion.id_sesion}')">⚙️</button>
               <button class="btn-icon" title="Gestionar Materiales" onclick="window.ViewSesiones.abrirModalDocs('${sesion.id_sesion}')">📁</button>
+              
               <span style="border-left: 1px solid #ddd; height: 16px; display:inline-block; margin: 0 2px;"></span>
+              
+              ${btnEntrega}
               ${btnGrabacion}
               ${btnIA}
+              
               <span style="border-left: 1px solid #ddd; height: 16px; display:inline-block; margin: 0 2px;"></span>
               ${btnEstado}
             </div>
@@ -274,6 +294,7 @@ window.ViewSesiones = {
         </tr>
       `;
     });
+
     container.innerHTML = html + '</tbody></table>';
   },
 
@@ -296,8 +317,12 @@ window.ViewSesiones = {
     if (!id) {
       const tipoRapido = document.getElementById('selTipoNuevo').value;
       this.sesionEnEdicion = {
-        id_sesion: 'NEW', id_curricula: this.selectedCurriculaId, nombre: `Nuevo/a ${tipoRapido}`,
-        estado: 'ACTIVO', meta_json: JSON.stringify({ tipo: tipoRapido, orden: '', fecha: '' }), documentos: '[]'
+        id_sesion: 'NEW',
+        id_curricula: this.selectedCurriculaId,
+        nombre: `Nuevo/a ${tipoRapido}`,
+        estado: 'ACTIVO',
+        meta_json: JSON.stringify({ tipo: tipoRapido, orden: '', fecha: '' }),
+        documentos: '[]'
       };
       document.getElementById('lblMetaSesId').textContent = 'Nuevo Registro';
     } else {
@@ -312,13 +337,23 @@ window.ViewSesiones = {
     document.getElementById('metaSesOrden').value = meta.orden || '';
     document.getElementById('metaSesFecha').value = meta.fecha || '';
     document.getElementById('metaSesIA').value = meta.chat_ia || '';
+    
+    // 🚀 Cargamos los datos condicionales
     document.getElementById('metaSesGrabacion').value = meta.grabacion || '';
+    document.getElementById('metaSesEntrega').value = meta.link_entrega || '';
 
+    // Lógica dinámica para mostrar/ocultar según el Tipo
     const tipoSelect = document.getElementById('metaSesTipo');
     const grpGrabacion = document.getElementById('grpGrabacion');
-    const toggleGrabacion = () => { grpGrabacion.style.display = tipoSelect.value === 'Día' ? 'block' : 'none'; };
-    tipoSelect.onchange = toggleGrabacion;
-    toggleGrabacion();
+    const grpEntrega = document.getElementById('grpEntrega');
+    
+    const toggleCamposCondicionales = () => {
+      grpGrabacion.style.display = tipoSelect.value === 'Día' ? 'block' : 'none';
+      grpEntrega.style.display = tipoSelect.value === 'Tarea' ? 'block' : 'none';
+    };
+    
+    tipoSelect.onchange = toggleCamposCondicionales;
+    toggleCamposCondicionales(); // Ejecutar al abrir el modal
 
     document.getElementById('modalMetaSesiones').style.display = 'flex';
   },
@@ -328,17 +363,28 @@ window.ViewSesiones = {
     btn.disabled = true; btn.textContent = '⏳ Guardando...';
 
     this.sesionEnEdicion.nombre = document.getElementById('metaSesNombre').value.trim() || 'Sin Nombre';
+    
     let meta = {}; try { meta = JSON.parse(this.sesionEnEdicion.meta_json || '{}'); } catch(e){}
     meta.tipo = document.getElementById('metaSesTipo').value;
     meta.orden = parseInt(document.getElementById('metaSesOrden').value) || 0;
     meta.fecha = document.getElementById('metaSesFecha').value;
     meta.chat_ia = document.getElementById('metaSesIA').value.trim();
     
-    if (meta.tipo === 'Día') meta.grabacion = document.getElementById('metaSesGrabacion').value.trim();
-    else meta.grabacion = "";
+    // 🚀 Limpieza inteligente para evitar datos basura en el JSON (Orphan Data)
+    if (meta.tipo === 'Día') {
+      meta.grabacion = document.getElementById('metaSesGrabacion').value.trim();
+      meta.link_entrega = "";
+    } else if (meta.tipo === 'Tarea') {
+      meta.link_entrega = document.getElementById('metaSesEntrega').value.trim();
+      meta.grabacion = "";
+    } else {
+      meta.grabacion = "";
+      meta.link_entrega = "";
+    }
     
     this.sesionEnEdicion.meta_json = JSON.stringify(meta);
 
+    // Guardado en la Memoria RAM Local
     if (this.sesionEnEdicion.id_sesion === 'NEW') {
       this.sesionEnEdicion.id_sesion = 'SES_' + new Date().getTime();
       App.State.sesiones.push(this.sesionEnEdicion);
@@ -347,6 +393,7 @@ window.ViewSesiones = {
       if(idx > -1) App.State.sesiones[idx] = this.sesionEnEdicion;
     }
 
+    // Persistencia en Google Sheets
     google.script.run
       .withSuccessHandler(() => {
         btn.disabled = false; btn.textContent = '💾 Guardar Sesión';
@@ -354,7 +401,11 @@ window.ViewSesiones = {
         this.filtrar(this.selectedCurriculaId); 
         this.actualizarEstadoUi('✅ Sesión guardada con éxito.');
       })
-      .withFailureHandler(e => { alert("Error: " + e.message); btn.disabled = false; btn.textContent = '💾 Guardar Sesión'; })
+      .withFailureHandler(e => { 
+        alert("Error: " + e.message); 
+        btn.disabled = false; 
+        btn.textContent = '💾 Guardar Sesión'; 
+      })
       .guardarSesionesSPA(App.State.sesiones);
   },
 

@@ -77,14 +77,27 @@
 
 <div id="modalDocsCurricula" class="modal-overlay">
   <div class="modal-box strict-modal" style="width: 800px;">
-    <div class="modal-header">
+    <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
       <h3 style="margin:0; color:var(--color-primario);">📁 Archivos y Sílabos del Curso</h3>
       <div style="font-size:11px; color:#666; margin-top:4px;">Curso: <b id="lblDocsCurrNombre"></b></div>
     </div>
     
-    <div style="padding: 16px 24px; border-bottom: 1px solid #eee; background: #f8fafc; display: flex; gap: 8px; align-items: center;">
-      <input type="text" id="txtNuevoDocNombre" placeholder="Nombre del nuevo archivo o material..." style="flex-grow: 1; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px;" onkeypress="if(event.key === 'Enter') window.ViewCurricula.agregarDocRapido()">
-      <button class="btn-pri" onclick="window.ViewCurricula.agregarDocRapido()" style="padding: 10px 20px;">➕ Agregar</button>
+    <div style="padding: 16px 24px; border-bottom: 1px solid #eee; background: #f8fafc;">
+       <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 11px; font-weight: bold; color: #5f6368; text-transform: uppercase;">1. Vista y Carpeta Destino:</span>
+          <select id="selCarpetaDocsCurr" onchange="window.ViewCurricula.renderListaDocs()" style="padding: 4px 8px; font-size: 12px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold;">
+            <option value="DOCUMENTOS">📁 DOCUMENTOS (Interno)</option>
+            <option value="PUBLICACIONES">📢 PUBLICACIONES (Compartido)</option>
+          </select>
+       </div>
+       
+       <div id="grupoBotonesDocsCurr" style="display: flex; gap: 8px; align-items: center;">
+           <span style="font-size: 11px; font-weight: bold; color: #5f6368; text-transform: uppercase; width: 140px;">2. ➕ Crear Archivo:</span>
+           <button class="btn-sec" onclick="window.ViewCurricula.crearDocDrive('LINK')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">🔗 Link Web</button>
+           <button class="btn-sec" onclick="window.ViewCurricula.crearDocDrive('DOC')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">📄 Documento</button>
+           <button class="btn-sec" onclick="window.ViewCurricula.crearDocDrive('SHEET')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">📊 Sheet Excel</button>
+           <button class="btn-sec" onclick="window.ViewCurricula.crearDocDrive('SLIDE')" style="flex-grow:1; background:#fff; color:#1a73e8; border-color:#c2d7fa;">📽️ Diapositiva</button>
+       </div>
     </div>
 
     <div class="strict-scrollable" id="listaDocsCurrContenedor" style="padding: 0;">
@@ -332,7 +345,6 @@ window.ViewCurricula = {
     if(!this.currEnEdicion) return;
 
     document.getElementById('lblDocsCurrNombre').textContent = this.currEnEdicion.nombre;
-    document.getElementById('txtNuevoDocNombre').value = ''; // Limpiar input rápido
     
     try { 
       this.docsEnEdicion = JSON.parse(this.currEnEdicion.documentos || '[]'); 
@@ -341,6 +353,46 @@ window.ViewCurricula = {
 
     this.renderListaDocs();
     document.getElementById('modalDocsCurricula').style.display = 'flex';
+  },
+
+  // 🚀 CREACIÓN AUTOMATIZADA EN DRIVE
+  crearDocDrive: function(tipoSeleccionado) {
+    let nombreBase = "Nuevo Recurso";
+    if (tipoSeleccionado === 'DOC') nombreBase = "Nuevo Doc";
+    else if (tipoSeleccionado === 'SHEET') nombreBase = "Nuevo Sheet";
+    else if (tipoSeleccionado === 'SLIDE') nombreBase = "Nuevo Slide";
+    else if (tipoSeleccionado === 'LINK') nombreBase = "Nuevo Link";
+
+    const destinoCarpeta = document.getElementById('selCarpetaDocsCurr').value;
+
+    if (tipoSeleccionado === 'LINK') {
+      this.docsEnEdicion.push({ nombre: nombreBase, tipo: 'LINK', link: '', carpeta: destinoCarpeta });
+      this.renderListaDocs();
+      return;
+    }
+
+    const btnGroup = document.getElementById('grupoBotonesDocsCurr');
+    const nombreCurricula = this.currEnEdicion.nombre || "CURSO";
+
+    btnGroup.style.opacity = '0.4'; btnGroup.style.pointerEvents = 'none';
+    this.actualizarEstadoUi(`⏳ Generando archivo ${tipoSeleccionado} en Drive...`);
+
+    // Nota: Para Currícula enviamos "GENERAL" como nombre de sesión
+    google.script.run
+      .withSuccessHandler((res) => {
+        btnGroup.style.opacity = '1'; btnGroup.style.pointerEvents = 'auto';
+        if (res.status === 'success') {
+          this.actualizarEstadoUi('✅ Archivo creado exitosamente.');
+          this.docsEnEdicion.push({ 
+            nombre: res.nombre, 
+            tipo: tipoSeleccionado, 
+            link: res.url, 
+            carpeta: destinoCarpeta 
+          });
+          this.renderListaDocs();
+        } else { alert("Error: " + res.message); }
+      })
+      .crearArchivoEnDriveSPA(tipoSeleccionado, destinoCarpeta, nombreBase, "CURRÍCULA", nombreCurricula);
   },
 
   // Creador rápido solo con nombre
@@ -362,8 +414,10 @@ window.ViewCurricula = {
   // Renderizador de Tabla de Solo Lectura
   renderListaDocs: function() {
     const cont = document.getElementById('listaDocsCurrContenedor');
+    const filtroCarpeta = document.getElementById('selCarpetaDocsCurr').value;
+
     if (this.docsEnEdicion.length === 0) {
-      cont.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">Aún no hay archivos agregados. Utilice la barra superior para registrar el primero.</div>';
+      cont.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">Aún no hay archivos. Utilice los botones superiores para registrar uno.</div>';
       return;
     }
 
@@ -371,24 +425,41 @@ window.ViewCurricula = {
       <thead>
         <tr style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
           <th style="padding:12px 16px;">Nombre del Archivo</th>
-          <th style="padding:12px 16px; width:120px;">Tipo</th>
+          <th style="padding:12px 16px; width:140px;">Tipo</th>
           <th style="padding:12px 16px; text-align:center; width:80px;">Enlace</th>
           <th style="padding:12px 16px; text-align:center; width:120px;">Acciones</th>
         </tr>
       </thead>
       <tbody>`;
 
+    let docsMostrados = 0;
     this.docsEnEdicion.forEach((doc, idx) => {
+      const estadoCarpeta = doc.carpeta || 'DOCUMENTOS';
+      if (estadoCarpeta !== filtroCarpeta) return;
+      docsMostrados++;
+
+      let icono = '📄';
+      if(doc.tipo === 'LINK') icono = '🔗';
+      if(doc.tipo === 'SHEET') icono = '📊';
+      if(doc.tipo === 'SLIDE') icono = '📽️';
+
       const linkBadge = doc.link 
         ? `<a href="${App.escapeHtml(doc.link)}" target="_blank" style="color:#2563eb; text-decoration:none; font-weight:bold; padding:4px 8px; background:#eff6ff; border-radius:4px;">Ver ↗</a>`
         : `<span style="color:#94a3b8; font-size:11px;">Sin Enlace</span>`;
 
+      const badgeCarpeta = estadoCarpeta === 'PUBLICACIONES'
+        ? `<span style="background:#e0e7ff; color:#1d4ed8; padding:2px 6px; border-radius:4px; font-size:9px; border:1px solid #bfdbfe;">📢 COMPARTIDO</span>`
+        : `<span style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; font-size:9px; border:1px solid #e2e8f0;">🔒 INTERNO</span>`;
+
       html += `
         <tr style="border-bottom:1px solid #eee; transition: 0.2s; background: #fff;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-          <td style="padding:12px 16px; font-weight:bold; color:#1e293b;">${App.escapeHtml(doc.nombre || 'Sin Nombre')}</td>
           <td style="padding:12px 16px;">
-            <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; border: 1px solid #e2e8f0;">
-              ${App.escapeHtml(doc.tipo || 'PDF')}
+            <div style="font-weight:bold; color:#1e293b; font-size:13px;">${App.escapeHtml(doc.nombre || 'Sin Nombre')}</div>
+            <div style="margin-top: 4px;">${badgeCarpeta}</div>
+          </td>
+          <td style="padding:12px 16px;">
+            <span style="background:#f1f5f9; color:#475569; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:bold; border: 1px solid #e2e8f0; display:inline-block;">
+              ${icono} ${App.escapeHtml(doc.tipo || 'DOC')}
             </span>
           </td>
           <td style="padding:12px 16px; text-align:center;">${linkBadge}</td>
@@ -400,6 +471,11 @@ window.ViewCurricula = {
           </td>
         </tr>`;
     });
+
+    if (docsMostrados === 0) {
+      let nombreVista = filtroCarpeta === 'PUBLICACIONES' ? '📢 COMPARTIDO' : '🔒 INTERNO';
+      html += `<tr><td colspan="4" style="padding:40px; text-align:center; color:#888;">No hay materiales en la vista <b>${nombreVista}</b>.</td></tr>`;
+    }
     cont.innerHTML = html + '</tbody></table>';
   },
 
@@ -407,10 +483,28 @@ window.ViewCurricula = {
   abrirModalMetaDoc: function(idx) {
     this.docIndexEnEdicion = idx;
     const doc = this.docsEnEdicion[idx];
-
+    
     document.getElementById('metaDocNombre').value = doc.nombre || '';
-    document.getElementById('metaDocTipo').value = doc.tipo || 'SÍLABO';
-    document.getElementById('metaDocLink').value = doc.link || '';
+    document.getElementById('metaDocTipo').value = doc.tipo || 'DOC';
+    
+    const lblUbicacion = document.getElementById('lblMetaDocUbicacion');
+    const estadoCarpeta = doc.carpeta || 'DOCUMENTOS';
+    if (estadoCarpeta === 'PUBLICACIONES') {
+        lblUbicacion.innerText = "📢 Acceso: PÚBLICO / COMPARTIDO";
+        lblUbicacion.style.backgroundColor = "#e0e7ff"; lblUbicacion.style.color = "#1d4ed8";
+    } else {
+        lblUbicacion.innerText = "🔒 Acceso: PRIVADO / INTERNO";
+        lblUbicacion.style.backgroundColor = "#f1f5f9"; lblUbicacion.style.color = "#475569";
+    }
+    
+    const inputLink = document.getElementById('metaDocLink');
+    inputLink.value = doc.link || '';
+
+    if (doc.tipo !== 'LINK') {
+        inputLink.disabled = true; inputLink.style.backgroundColor = '#f1f5f9';
+    } else {
+        inputLink.disabled = false; inputLink.style.backgroundColor = '#fff';
+    }
 
     document.getElementById('modalMetaDocCurricula').style.display = 'flex';
   },
@@ -418,25 +512,47 @@ window.ViewCurricula = {
   // Guardar datos del Sub-Modal de vuelta a la RAM local
   guardarMetaDocLocal: function() {
     if (this.docIndexEnEdicion === null) return;
-    
-    const nombre = document.getElementById('metaDocNombre').value.trim();
-    if (!nombre) { alert("El nombre del archivo no puede estar vacío."); return; }
+    const nombreNuevoBase = document.getElementById('metaDocNombre').value.trim();
+    if (!nombreNuevoBase) { alert("⚠️ El nombre no puede estar vacío."); return; }
 
-    this.docsEnEdicion[this.docIndexEnEdicion] = {
-      nombre: nombre,
-      tipo: document.getElementById('metaDocTipo').value,
-      link: document.getElementById('metaDocLink').value.trim()
-    };
+    const doc = this.docsEnEdicion[this.docIndexEnEdicion];
+    const nombreAntiguoBase = doc.nombre;
+    const isDriveLink = doc.link && (doc.link.includes('drive.google.com') || doc.link.includes('docs.google.com'));
+
+    doc.nombre = nombreNuevoBase;
+    if (doc.tipo === 'LINK') {
+        doc.link = document.getElementById('metaDocLink').value.trim();
+    }
+
+    if (isDriveLink && nombreNuevoBase !== nombreAntiguoBase) {
+        const nombreCurricula = this.currEnEdicion.nombre || "CURSO";
+        const nombreCompletoDrive = `${nombreNuevoBase} - CURRÍCULA - ${nombreCurricula.toUpperCase()}`;
+
+        this.actualizarEstadoUi('🔄 Sincronizando nombre en Drive...');
+        google.script.run
+            .withSuccessHandler((res) => {
+                if (res.status === 'success') this.actualizarEstadoUi('✅ Sincronización completa.');
+            })
+            .renombrarArchivoEnDriveSPA(doc.link, nombreCompletoDrive);
+    }
 
     document.getElementById('modalMetaDocCurricula').style.display = 'none';
     this.docIndexEnEdicion = null;
-    this.renderListaDocs(); // Refresca la tabla principal del modal
+    this.renderListaDocs(); 
   },
 
   eliminarDoc: function(idx) {
-    if(!confirm("⚠️ ¿Está seguro de eliminar permanentemente este archivo de la lista?")) return;
+    if(!confirm("⚠️ ¿Eliminar permanentemente este material? Si es de Drive, se enviará a la papelera.")) return;
+    
+    const docABorrar = this.docsEnEdicion[idx];
+    const link = docABorrar.link || '';
     this.docsEnEdicion.splice(idx, 1);
     this.renderListaDocs();
+
+    if (link.includes('drive.google.com') || link.includes('docs.google.com')) {
+       this.actualizarEstadoUi('🗑️ Eliminando en Drive...');
+       google.script.run.eliminarArchivoDeDriveSPA(link);
+    }
   },
 
   // Persistir toda la lista de documentos en Sheets
